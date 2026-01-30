@@ -74,20 +74,22 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Header con bienvenida */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
       >
-        <div className="flex items-center gap-4">
-          <NaranjoTree size="sm" fruitCount={Math.min(investments.length + 1, 7)} animated={false} />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="shrink-0">
+            <NaranjoTree size="sm" fruitCount={Math.min(investments.length + 1, 7)} animated={false} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
               {isReadOnly ? 'Mi Tesoro' : `El Tesoro de ${user?.childName}`}
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 mt-0.5 sm:mt-1 text-sm sm:text-base line-clamp-2">
               {isReadOnly
                 ? 'Tu naranjo sigue creciendo, protegido y con paciencia'
                 : 'Cultivando un futuro sólido, fruto a fruto'}
@@ -96,13 +98,14 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {!isReadOnly && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 shrink-0">
             <Button
               variant="primary"
-              leftIcon={<Plus className="w-5 h-5" />}
+              leftIcon={<Plus className="w-4 h-4 sm:w-5 sm:h-5" />}
               onClick={() => setShowInvestmentModal(true)}
+              className="w-full sm:w-auto"
             >
-              Nuevo aporte
+              <span className="sm:inline">Nuevo aporte</span>
             </Button>
           </div>
         )}
@@ -125,7 +128,7 @@ export const Dashboard: React.FC = () => {
       <DashboardSummary portfolio={portfolio} />
 
       {/* Grid de contenido */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Inversiones */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

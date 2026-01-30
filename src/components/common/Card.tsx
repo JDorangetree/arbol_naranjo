@@ -27,7 +27,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <Component
       className={clsx(
-        'bg-white rounded-2xl shadow-lg p-6',
+        'bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6',
         hover && 'cursor-pointer',
         className
       )}
@@ -96,18 +96,18 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <Card className="relative overflow-hidden">
       {icon && (
-        <div className="absolute top-4 right-4 text-gray-200 opacity-50">
-          {icon}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-200 opacity-50">
+          <div className="w-6 h-6 sm:w-8 sm:h-8">{icon}</div>
         </div>
       )}
-      <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
-      <p className={clsx('text-2xl font-bold money', colorClasses[color])}>
+      <p className="text-xs sm:text-sm font-medium text-gray-500 mb-0.5 sm:mb-1">{label}</p>
+      <p className={clsx('text-xl sm:text-2xl font-bold money', colorClasses[color])}>
         {value}
       </p>
       {subvalue && (
         <p
           className={clsx(
-            'text-sm font-medium mt-1',
+            'text-xs sm:text-sm font-medium mt-0.5 sm:mt-1',
             trend ? trendColors[trend] : 'text-gray-500'
           )}
         >

@@ -18,10 +18,10 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'md',
 }) => {
   const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
+    sm: 'sm:max-w-sm',
+    md: 'sm:max-w-md',
+    lg: 'sm:max-w-lg',
+    xl: 'sm:max-w-xl',
   };
 
   return (
@@ -37,30 +37,35 @@ export const Modal: React.FC<ModalProps> = ({
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal - Full screen on mobile, centered on desktop */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', duration: 0.3 }}
-            className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizes[size]} z-50 p-4`}
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`fixed inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full ${sizes[size]} z-50 sm:p-4`}
           >
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col">
               {/* Header */}
               {title && (
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-                  <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex-shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
                   <button
                     onClick={onClose}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-active"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
               )}
 
+              {/* Drag indicator for mobile */}
+              <div className="sm:hidden flex justify-center py-2 border-b border-gray-100">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+
               {/* Content */}
-              <div className="p-6 overflow-y-auto">{children}</div>
+              <div className="p-4 sm:p-6 overflow-y-auto">{children}</div>
             </div>
           </motion.div>
         </>
