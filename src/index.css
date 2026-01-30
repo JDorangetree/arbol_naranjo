@@ -1,0 +1,127 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+@theme {
+  /* ===========================================
+   * NARANJO - Crecimiento, tiempo, ciclos, frutos
+   * "Nada crece rápido. Nada se fuerza. Todo madura."
+   * =========================================== */
+
+  /* Naranjo - Fruto (Naranja cálido) */
+  --color-primary-50: #FFF7ED;
+  --color-primary-100: #FFEDD5;
+  --color-primary-200: #FED7AA;
+  --color-primary-300: #FDBA74;
+  --color-primary-400: #FB923C;
+  --color-primary-500: #F97316;
+  --color-primary-600: #EA580C;
+  --color-primary-700: #C2410C;
+  --color-primary-800: #9A3412;
+  --color-primary-900: #7C2D12;
+
+  /* Naranjo - Hojas (Verde del follaje) */
+  --color-growth-50: #F0FDF4;
+  --color-growth-100: #DCFCE7;
+  --color-growth-200: #BBF7D0;
+  --color-growth-300: #86EFAC;
+  --color-growth-400: #4ADE80;
+  --color-growth-500: #22C55E;
+  --color-growth-600: #16A34A;
+  --color-growth-700: #15803D;
+  --color-growth-800: #166534;
+  --color-growth-900: #14532D;
+
+  /* Naranjo - Tronco (Marrón tierra) */
+  --color-trunk-50: #FEFDFB;
+  --color-trunk-100: #FBF7F1;
+  --color-trunk-200: #E8DFD3;
+  --color-trunk-300: #D4C4B0;
+  --color-trunk-400: #B8A089;
+  --color-trunk-500: #9C7C62;
+  --color-trunk-600: #7D5F48;
+  --color-trunk-700: #5E4636;
+  --color-trunk-800: #3F2F25;
+  --color-trunk-900: #201814;
+
+  /* ===========================================
+   * TORRE - Protección, estabilidad, legado
+   * "No se mueve. No se improvisa. Sostiene."
+   * =========================================== */
+
+  /* Torre - Piedra (Gris noble) */
+  --color-stone-50: #FAFAF9;
+  --color-stone-100: #F5F5F4;
+  --color-stone-200: #E7E5E4;
+  --color-stone-300: #D6D3D1;
+  --color-stone-400: #A8A29E;
+  --color-stone-500: #78716C;
+  --color-stone-600: #57534E;
+  --color-stone-700: #44403C;
+  --color-stone-800: #292524;
+  --color-stone-900: #1C1917;
+
+  /* Torre - Oro (Detalles nobles) */
+  --color-gold-50: #FFFBEB;
+  --color-gold-100: #FEF3C7;
+  --color-gold-200: #FDE68A;
+  --color-gold-300: #FCD34D;
+  --color-gold-400: #FBBF24;
+  --color-gold-500: #F59E0B;
+  --color-gold-600: #D97706;
+  --color-gold-700: #B45309;
+  --color-gold-800: #92400E;
+  --color-gold-900: #78350F;
+
+  /* Torre - Cielo (Azul de confianza) */
+  --color-trust-50: #EFF6FF;
+  --color-trust-100: #DBEAFE;
+  --color-trust-200: #BFDBFE;
+  --color-trust-300: #93C5FD;
+  --color-trust-400: #60A5FA;
+  --color-trust-500: #3B82F6;
+  --color-trust-600: #2563EB;
+  --color-trust-700: #1D4ED8;
+  --color-trust-800: #1E40AF;
+  --color-trust-900: #1E3A8A;
+
+  /* Fuentes */
+  --font-heading: 'Nunito', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --background: #FFFBF5;
+  --foreground: #1C1917;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
