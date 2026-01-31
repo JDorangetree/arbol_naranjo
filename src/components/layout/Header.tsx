@@ -16,11 +16,14 @@ import {
   FileText,
   Download,
   History,
+  Sun,
+  Moon,
 } from 'lucide-react';
-import { useAuthStore } from '../../store';
+import { useAuthStore, useThemeStore } from '../../store';
 import { useIsReadOnly, useAppModeStore } from '../../store/useAppModeStore';
 import { formatAge } from '../../utils';
 import { NaranjoTree } from '../illustrations';
+import { ThemeToggle } from '../common';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -53,9 +56,12 @@ export const Header: React.FC = () => {
 
   const filteredNavItems = navItems.filter(item => !isReadOnly || item.showInReadOnly);
 
+  const { resolvedTheme, toggleTheme } = useThemeStore();
+  const isDark = resolvedTheme === 'dark';
+
   return (
     <>
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-30 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
@@ -67,11 +73,11 @@ export const Header: React.FC = () => {
                 <NaranjoTree size="sm" fruitCount={3} animated={false} />
               </motion.div>
               <div className="hidden sm:block">
-                <h1 className="font-bold text-gray-900 text-sm sm:text-base">
+                <h1 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
                   El Tesoro de {user?.childName || 'Tu Hijo'}
                 </h1>
                 {user?.childBirthDate && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     {formatAge(user.childBirthDate)} cultivando futuro
                   </p>
                 )}
@@ -98,27 +104,29 @@ export const Header: React.FC = () => {
               {/* Usuario y configuración - escritorio */}
               <div className="hidden sm:flex items-center gap-2">
                 {!isReadOnly && (
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700 max-w-24 truncate">
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-slate-800 rounded-full">
+                    <User className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300 max-w-24 truncate">
                       {user?.displayName}
                     </span>
                   </div>
                 )}
 
                 {isReadOnly && (
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-growth-50 rounded-full">
-                    <span className="text-sm font-medium text-growth-700">
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-growth-50 dark:bg-growth-900/30 rounded-full">
+                    <span className="text-sm font-medium text-growth-700 dark:text-growth-400">
                       {user?.childName || 'Explorador'}
                     </span>
                   </div>
                 )}
 
+                <ThemeToggle />
+
                 {!isReadOnly && (
                   <>
                     <Link
                       to="/settings/access"
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                      className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title="Configurar acceso del hijo"
                     >
                       <Shield className="w-5 h-5" />
@@ -126,7 +134,7 @@ export const Header: React.FC = () => {
 
                     <Link
                       to="/settings/instruments"
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                      className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title="Configurar instrumentos"
                     >
                       <Settings className="w-5 h-5" />
@@ -136,17 +144,20 @@ export const Header: React.FC = () => {
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                   title={isReadOnly ? 'Salir' : 'Cerrar sesión'}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>
 
+              {/* Toggle tema móvil */}
+              <ThemeToggle className="sm:hidden" />
+
               {/* Botón menú móvil */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors touch-active"
+                className="lg:hidden p-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-active"
                 aria-label="Menú"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -175,21 +186,21 @@ export const Header: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.25 }}
-              className="fixed top-0 right-0 bottom-0 w-72 bg-white shadow-xl z-50 lg:hidden overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-xl z-50 lg:hidden overflow-y-auto"
             >
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-4 border-b border-gray-100 dark:border-slate-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-gray-900 dark:text-white">
                       {isReadOnly ? user?.childName : user?.displayName}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                       {isReadOnly ? 'Modo Lectura' : 'Modo Padre'}
                     </p>
                   </div>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-full"
+                    className="p-2 text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -207,8 +218,8 @@ export const Header: React.FC = () => {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors touch-active ${
                         isActive
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                          : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -219,11 +230,11 @@ export const Header: React.FC = () => {
               </nav>
 
               {!isReadOnly && (
-                <div className="p-2 border-t border-gray-100">
+                <div className="p-2 border-t border-gray-100 dark:border-slate-800">
                   <Link
                     to="/settings/access"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors touch-active"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors touch-active"
                   >
                     <Shield className="w-5 h-5" />
                     <span className="font-medium">Acceso del Hijo</span>
@@ -231,7 +242,7 @@ export const Header: React.FC = () => {
                   <Link
                     to="/settings/instruments"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors touch-active"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors touch-active"
                   >
                     <Settings className="w-5 h-5" />
                     <span className="font-medium">Configuración</span>
@@ -239,10 +250,10 @@ export const Header: React.FC = () => {
                 </div>
               )}
 
-              <div className="p-2 border-t border-gray-100">
+              <div className="p-2 border-t border-gray-100 dark:border-slate-800">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors touch-active"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors touch-active"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">{isReadOnly ? 'Salir' : 'Cerrar Sesión'}</span>
@@ -270,8 +281,8 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children }) => {
       to={to}
       className={`text-sm font-medium transition-colors ${
         isActive
-          ? 'text-primary-500'
-          : 'text-gray-600 hover:text-gray-900'
+          ? 'text-primary-500 dark:text-primary-400'
+          : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
       }`}
     >
       {children}

@@ -21,14 +21,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 dark:text-slate-500">
               {leftIcon}
             </div>
           )}
@@ -38,18 +38,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={clsx(
               'w-full px-4 py-2.5 border rounded-xl transition-all duration-200',
               'focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none',
-              'placeholder:text-gray-400',
+              'placeholder:text-gray-400 dark:placeholder:text-slate-500',
+              'bg-white dark:bg-slate-800 text-gray-900 dark:text-white',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               error
-                ? 'border-red-300 focus:ring-red-500'
-                : 'border-gray-300 hover:border-gray-400',
+                ? 'border-red-300 dark:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500',
               className
             )}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400 dark:text-slate-500">
               {rightIcon}
             </div>
           )}
@@ -58,7 +59,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p
             className={clsx(
               'mt-1 text-sm',
-              error ? 'text-red-500' : 'text-gray-500'
+              error ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'
             )}
           >
             {error || helperText}
@@ -86,7 +87,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
           >
             {label}
           </label>
@@ -97,10 +98,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           className={clsx(
             'w-full px-4 py-2.5 border rounded-xl transition-all duration-200',
             'focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none',
-            'bg-white cursor-pointer',
+            'bg-white dark:bg-slate-800 text-gray-900 dark:text-white cursor-pointer',
             error
-              ? 'border-red-300 focus:ring-red-500'
-              : 'border-gray-300 hover:border-gray-400',
+              ? 'border-red-300 dark:border-red-500 focus:ring-red-500'
+              : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500',
             className
           )}
           {...props}
@@ -111,7 +112,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p>}
       </div>
     );
   }

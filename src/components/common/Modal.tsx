@@ -45,23 +45,23 @@ export const Modal: React.FC<ModalProps> = ({
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={`fixed inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full ${sizes[size]} z-50 sm:p-4`}
           >
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+            <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col">
               {/* Header */}
               {title && (
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex-shrink-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
                   <button
                     onClick={onClose}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-active"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors touch-active"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
+                    <X className="w-5 h-5 text-gray-500 dark:text-slate-400" />
                   </button>
                 </div>
               )}
 
               {/* Drag indicator for mobile */}
-              <div className="sm:hidden flex justify-center py-2 border-b border-gray-100">
-                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              <div className="sm:hidden flex justify-center py-2 border-b border-gray-100 dark:border-slate-800">
+                <div className="w-10 h-1 bg-gray-300 dark:bg-slate-700 rounded-full" />
               </div>
 
               {/* Content */}

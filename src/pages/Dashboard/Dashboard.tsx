@@ -67,7 +67,7 @@ export const Dashboard: React.FC = () => {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Cargando tu portafolio...</p>
+          <p className="text-gray-500 dark:text-slate-400">Cargando tu portafolio...</p>
         </div>
       </div>
     );
@@ -86,10 +86,10 @@ export const Dashboard: React.FC = () => {
             <NaranjoTree size="sm" fruitCount={Math.min(investments.length + 1, 7)} animated={false} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white truncate">
               {isReadOnly ? 'Mi Tesoro' : `El Tesoro de ${user?.childName}`}
             </h1>
-            <p className="text-gray-500 mt-0.5 sm:mt-1 text-sm sm:text-base line-clamp-2">
+            <p className="text-gray-500 dark:text-slate-400 mt-0.5 sm:mt-1 text-sm sm:text-base line-clamp-2">
               {isReadOnly
                 ? 'Tu naranjo sigue creciendo, protegido y con paciencia'
                 : 'Cultivando un futuro sólido, fruto a fruto'}
@@ -156,10 +156,10 @@ export const Dashboard: React.FC = () => {
                 <div className="flex justify-center mb-4">
                   <NaranjoTree size="md" fruitCount={0} />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                   ¡Es hora de comenzar a invertir!
                 </h3>
-                <p className="text-gray-500 text-sm mb-4">
+                <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">
                   El patrimonio de {user?.childName} está listo para crecer
                 </p>
                 {!isReadOnly && (
