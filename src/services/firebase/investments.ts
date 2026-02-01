@@ -15,6 +15,20 @@ import {
 import { db } from './config';
 import { Investment, Transaction, ETF } from '../../types';
 
+// ============ HELPERS ============
+
+// Obtener referencia a la colección de inversiones del usuario
+const getInvestmentsCollection = (userId: string) =>
+  collection(db, 'users', userId, 'investments');
+
+// Obtener referencia a la colección de transacciones del usuario
+const getTransactionsCollection = (userId: string) =>
+  collection(db, 'users', userId, 'transactions');
+
+// Obtener referencia a un documento de inversión específico
+const getInvestmentDoc = (userId: string, investmentId: string) =>
+  doc(db, 'users', userId, 'investments', investmentId);
+
 // ============ INVERSIONES ============
 
 export async function createInvestment(
@@ -26,7 +40,6 @@ export async function createInvestment(
   const totalInvested = units * pricePerUnit;
 
   const investmentData = {
-    userId,
     etfId: etf.id,
     etfName: etf.name,
     etfTicker: etf.ticker,
@@ -41,10 +54,11 @@ export async function createInvestment(
     updatedAt: serverTimestamp(),
   };
 
-  const docRef = await addDoc(collection(db, 'investments'), investmentData);
+  const docRef = await addDoc(getInvestmentsCollection(userId), investmentData);
 
   return {
     id: docRef.id,
+    userId,
     ...investmentData,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -52,19 +66,15 @@ export async function createInvestment(
 }
 
 export async function getInvestments(userId: string): Promise<Investment[]> {
-  // Consulta simple sin orderBy para evitar problemas con índices
-  const q = query(
-    collection(db, 'investments'),
-    where('userId', '==', userId)
-  );
+  // Consulta directa a la subcolección del usuario
+  const investmentsRef = getInvestmentsCollection(userId);
+  const snapshot = await getDocs(investmentsRef);
 
-  const snapshot = await getDocs(q);
-
-  const investments = snapshot.docs.map((doc) => {
-    const data = doc.data();
+  const investments = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
     return {
-      id: doc.id,
-      userId: data.userId,
+      id: docSnap.id,
+      userId,
       etfId: data.etfId,
       etfName: data.etfName,
       etfTicker: data.etfTicker,
@@ -89,8 +99,7 @@ export async function getInvestmentByEtf(
   etfId: string
 ): Promise<Investment | null> {
   const q = query(
-    collection(db, 'investments'),
-    where('userId', '==', userId),
+    getInvestmentsCollection(userId),
     where('etfId', '==', etfId)
   );
 
@@ -100,12 +109,12 @@ export async function getInvestmentByEtf(
     return null;
   }
 
-  const doc = snapshot.docs[0];
-  const data = doc.data();
+  const docSnap = snapshot.docs[0];
+  const data = docSnap.data();
 
   return {
-    id: doc.id,
-    userId: data.userId,
+    id: docSnap.id,
+    userId,
     etfId: data.etfId,
     etfName: data.etfName,
     etfTicker: data.etfTicker,
@@ -122,10 +131,11 @@ export async function getInvestmentByEtf(
 }
 
 export async function updateInvestment(
+  userId: string,
   investmentId: string,
   updates: Partial<Investment>
 ): Promise<void> {
-  const docRef = doc(db, 'investments', investmentId);
+  const docRef = getInvestmentDoc(userId, investmentId);
   await updateDoc(docRef, {
     ...updates,
     updatedAt: serverTimestamp(),
@@ -133,11 +143,12 @@ export async function updateInvestment(
 }
 
 export async function addToInvestment(
+  userId: string,
   investmentId: string,
   additionalUnits: number,
   pricePerUnit: number
 ): Promise<void> {
-  const docRef = doc(db, 'investments', investmentId);
+  const docRef = getInvestmentDoc(userId, investmentId);
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {
@@ -161,8 +172,8 @@ export async function addToInvestment(
   });
 }
 
-export async function deleteInvestment(investmentId: string): Promise<void> {
-  await deleteDoc(doc(db, 'investments', investmentId));
+export async function deleteInvestment(userId: string, investmentId: string): Promise<void> {
+  await deleteDoc(getInvestmentDoc(userId, investmentId));
 }
 
 // ============ TRANSACCIONES ============
@@ -170,13 +181,15 @@ export async function deleteInvestment(investmentId: string): Promise<void> {
 export async function createTransaction(
   transaction: Omit<Transaction, 'id' | 'createdAt'>
 ): Promise<Transaction> {
+  const { userId, ...transactionWithoutUserId } = transaction;
+
   const transactionData = {
-    ...transaction,
+    ...transactionWithoutUserId,
     date: Timestamp.fromDate(transaction.date),
     createdAt: serverTimestamp(),
   };
 
-  const docRef = await addDoc(collection(db, 'transactions'), transactionData);
+  const docRef = await addDoc(getTransactionsCollection(userId), transactionData);
 
   return {
     ...transaction,
@@ -189,19 +202,15 @@ export async function getTransactions(
   userId: string,
   limitCount?: number
 ): Promise<Transaction[]> {
-  // Consulta simple sin orderBy para evitar problemas con índices
-  const q = query(
-    collection(db, 'transactions'),
-    where('userId', '==', userId)
-  );
+  // Consulta directa a la subcolección del usuario
+  const transactionsRef = getTransactionsCollection(userId);
+  const snapshot = await getDocs(transactionsRef);
 
-  const snapshot = await getDocs(q);
-
-  const transactions = snapshot.docs.map((doc) => {
-    const data = doc.data();
+  const transactions = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
     return {
-      id: doc.id,
-      userId: data.userId,
+      id: docSnap.id,
+      userId,
       investmentId: data.investmentId,
       etfId: data.etfId,
       etfTicker: data.etfTicker,
@@ -226,21 +235,21 @@ export async function getTransactions(
 }
 
 export async function getTransactionsByInvestment(
+  userId: string,
   investmentId: string
 ): Promise<Transaction[]> {
   const q = query(
-    collection(db, 'transactions'),
-    where('investmentId', '==', investmentId),
-    orderBy('date', 'desc')
+    getTransactionsCollection(userId),
+    where('investmentId', '==', investmentId)
   );
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+  const transactions = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
     return {
-      id: doc.id,
-      userId: data.userId,
+      id: docSnap.id,
+      userId,
       investmentId: data.investmentId,
       etfId: data.etfId,
       etfTicker: data.etfTicker,
@@ -257,4 +266,7 @@ export async function getTransactionsByInvestment(
       createdAt: data.createdAt?.toDate() || new Date(),
     };
   });
+
+  // Ordenar por fecha descendente
+  return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
 }

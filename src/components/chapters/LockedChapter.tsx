@@ -60,7 +60,7 @@ export const LockedChapter: React.FC<LockedChapterProps> = ({
       onClick={onClick}
       className={onClick ? 'cursor-pointer' : ''}
     >
-      <Card className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+      <Card className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-900 border-gray-200 dark:border-slate-700">
         {/* Overlay con patrón */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -85,18 +85,18 @@ export const LockedChapter: React.FC<LockedChapterProps> = ({
               className="w-12 h-12 rounded-xl flex items-center justify-center opacity-50"
               style={{ backgroundColor: typeConfig?.color + '20' }}
             >
-              <Lock className="w-6 h-6 text-gray-400" />
+              <Lock className="w-6 h-6 text-gray-400 dark:text-slate-500" />
             </div>
 
             <div className="flex-1">
-              <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-slate-500 text-sm mb-1">
                 {getUnlockIcon()}
                 <span>{getUnlockMessage()}</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-500">
+              <h3 className="text-lg font-semibold text-gray-500 dark:text-slate-400">
                 {chapter.title}
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-slate-500">
                 {typeConfig?.label || 'Capitulo'}
               </p>
             </div>
@@ -104,14 +104,14 @@ export const LockedChapter: React.FC<LockedChapterProps> = ({
 
           {/* Teaser */}
           {chapter.lockedTeaser ? (
-            <div className="bg-white/50 rounded-lg p-4 border border-gray-200">
-              <p className="text-gray-500 italic">
+            <div className="bg-white/50 dark:bg-slate-700/50 rounded-lg p-4 border border-gray-200 dark:border-slate-600">
+              <p className="text-gray-500 dark:text-slate-400 italic">
                 "{chapter.lockedTeaser}"
               </p>
             </div>
           ) : (
-            <div className="bg-white/50 rounded-lg p-4 border border-gray-200 text-center">
-              <p className="text-gray-400">
+            <div className="bg-white/50 dark:bg-slate-700/50 rounded-lg p-4 border border-gray-200 dark:border-slate-600 text-center">
+              <p className="text-gray-400 dark:text-slate-500">
                 Hay algo especial esperandote...
               </p>
             </div>
@@ -120,7 +120,7 @@ export const LockedChapter: React.FC<LockedChapterProps> = ({
           {/* Info de desbloqueo */}
           <div className="mt-4 flex items-center justify-between text-sm">
             {unlockStatus.unlockAge && (
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-slate-500">
                 <Calendar className="w-4 h-4" />
                 <span>
                   Se desbloquea a los {unlockStatus.unlockAge} años
@@ -128,7 +128,7 @@ export const LockedChapter: React.FC<LockedChapterProps> = ({
               </div>
             )}
             {unlockStatus.unlockDate && (
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-slate-500">
                 <Calendar className="w-4 h-4" />
                 <span>
                   Se desbloquea el{' '}

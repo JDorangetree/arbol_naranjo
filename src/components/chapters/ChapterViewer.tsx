@@ -64,21 +64,21 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         // Headers
         if (line.startsWith('# ')) {
           return (
-            <h1 key={index} className="text-2xl font-bold text-gray-900 mt-6 mb-3">
+            <h1 key={index} className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-3">
               {line.substring(2)}
             </h1>
           );
         }
         if (line.startsWith('## ')) {
           return (
-            <h2 key={index} className="text-xl font-semibold text-gray-800 mt-5 mb-2">
+            <h2 key={index} className="text-xl font-semibold text-gray-800 dark:text-slate-200 mt-5 mb-2">
               {line.substring(3)}
             </h2>
           );
         }
         if (line.startsWith('### ')) {
           return (
-            <h3 key={index} className="text-lg font-medium text-gray-800 mt-4 mb-2">
+            <h3 key={index} className="text-lg font-medium text-gray-800 dark:text-slate-200 mt-4 mb-2">
               {line.substring(4)}
             </h3>
           );
@@ -86,7 +86,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         // Bold text dentro de líneas
         if (line.startsWith('**') && line.endsWith('**')) {
           return (
-            <p key={index} className="font-semibold text-gray-800 mb-2">
+            <p key={index} className="font-semibold text-gray-800 dark:text-slate-200 mb-2">
               {line.slice(2, -2)}
             </p>
           );
@@ -97,7 +97,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         }
         // Párrafos normales
         return (
-          <p key={index} className="text-gray-700 leading-relaxed mb-2">
+          <p key={index} className="text-gray-700 dark:text-slate-300 leading-relaxed mb-2">
             {line}
           </p>
         );
@@ -116,12 +116,12 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="px-6 py-4 border-b border-gray-100"
+          className="px-6 py-4 border-b border-gray-100 dark:border-slate-800"
           style={{ backgroundColor: typeConfig?.color + '10' }}
         >
           <div className="flex items-start justify-between">
@@ -152,7 +152,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
                 >
                   {typeConfig?.label}
                 </p>
-                <h2 className="text-xl font-bold text-gray-900">{chapter.title}</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{chapter.title}</h2>
               </div>
             </div>
 
@@ -169,7 +169,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
               )}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -181,7 +181,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Galería de imágenes */}
           {hasImages && (
-            <div className="relative bg-gray-100">
+            <div className="relative bg-gray-100 dark:bg-slate-800">
               <div className="aspect-video relative overflow-hidden">
                 <img
                   src={chapter.mediaUrls![currentImageIndex]}
@@ -225,7 +225,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
 
               {/* Caption */}
               {chapter.mediaCaptions?.[currentImageIndex] && (
-                <p className="px-6 py-3 text-sm text-gray-600 italic bg-gray-50">
+                <p className="px-6 py-3 text-sm text-gray-600 dark:text-slate-400 italic bg-gray-50 dark:bg-slate-700">
                   {chapter.mediaCaptions[currentImageIndex]}
                 </p>
               )}
@@ -244,11 +244,11 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
             {/* Tags */}
             {chapter.tags && chapter.tags.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <Tag className="w-4 h-4 text-gray-400" />
+                <Tag className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                 {chapter.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full"
+                    className="px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm rounded-full"
                   >
                     {tag}
                   </span>
@@ -258,14 +258,14 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
 
             {/* Años vinculados */}
             {chapter.linkedYears && chapter.linkedYears.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
+              <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 dark:text-slate-400">
                 <LinkIcon className="w-4 h-4" />
                 <span>Vinculado a: {chapter.linkedYears.join(', ')}</span>
               </div>
             )}
 
             {/* Fechas */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-400 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-400 dark:text-slate-500 pt-4 border-t border-gray-100 dark:border-slate-700">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 <span>
@@ -306,7 +306,7 @@ export const ChapterViewer: React.FC<ChapterViewerProps> = ({
         </div>
 
         {/* Footer con acción */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
           <div className="flex justify-end">
             <Button variant="secondary" onClick={onClose}>
               Cerrar

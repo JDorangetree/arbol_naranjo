@@ -49,7 +49,7 @@ export const AnnualReport: React.FC = () => {
       >
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+          className="inline-flex items-center gap-2 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm">Volver al Dashboard</span>
@@ -60,10 +60,10 @@ export const AnnualReport: React.FC = () => {
             <BookOpen className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               El Libro del Tesoro
             </h1>
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-slate-400">
               Genera el reporte anual de inversiones
             </p>
           </div>
@@ -130,14 +130,14 @@ export const AnnualReport: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="mb-6"
         >
-          <Card className="bg-red-50 border-red-200">
+          <Card className="bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-red-700">{error}</p>
+                <p className="text-red-700 dark:text-red-300">{error}</p>
                 <button
                   onClick={clearError}
-                  className="text-sm text-red-500 hover:text-red-700 mt-2"
+                  className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400 mt-2"
                 >
                   Cerrar
                 </button>
@@ -155,8 +155,8 @@ export const AnnualReport: React.FC = () => {
           className="text-center py-12"
         >
           <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Generando el libro del tesoro...</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-gray-500 dark:text-slate-400">Generando el libro del tesoro...</p>
+          <p className="text-sm text-gray-400 dark:text-slate-500 mt-2">
             Esto puede tomar unos segundos
           </p>
         </motion.div>
@@ -197,7 +197,7 @@ export const AnnualReport: React.FC = () => {
               )}
             </Button>
 
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-3">
               El PDF incluye {8} páginas con toda la historia del año
             </p>
           </motion.div>
@@ -212,10 +212,10 @@ export const AnnualReport: React.FC = () => {
           className="text-center py-12"
         >
           <span className="text-6xl mb-4 block">📚</span>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             Selecciona un año para generar el reporte
           </h3>
-          <p className="text-gray-500 max-w-md mx-auto">
+          <p className="text-gray-500 dark:text-slate-400 max-w-md mx-auto">
             Elige el año del que quieres crear el libro del tesoro
             y haz clic en "Generar" para ver la vista previa.
           </p>

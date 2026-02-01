@@ -74,24 +74,24 @@ export const Moments: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Sparkles className="w-7 h-7 text-primary-500" />
             Momentos Especiales
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 dark:text-slate-400 mt-1">
             Los recuerdos que construyen el tesoro de tu hijo
           </p>
         </div>
 
         {/* Resumen */}
-        <Card className="bg-gradient-to-r from-primary-50 to-gold-50 border-0">
+        <Card className="bg-gradient-to-r from-primary-50 to-gold-50 dark:from-primary-900/30 dark:to-gold-900/30 border-0">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm">
               <Heart className="w-6 h-6 text-primary-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">{filteredMoments.length} momentos</p>
-              <p className="text-xl font-bold text-gray-900 money">
+              <p className="text-sm text-gray-600 dark:text-slate-400">{filteredMoments.length} momentos</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white money">
                 {formatCurrency(totalInMoments, 'COP')}
               </p>
             </div>
@@ -103,7 +103,7 @@ export const Moments: React.FC = () => {
       <div className="relative">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors"
         >
           <Filter className="w-4 h-4" />
           <span>Filtrar por tipo</span>
@@ -116,12 +116,12 @@ export const Moments: React.FC = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-10 min-w-[200px]"
+              className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-3 z-10 min-w-[200px]"
             >
               <button
                 onClick={() => { setFilterType('all'); setShowFilters(false); }}
                 className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                  filterType === 'all' ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                  filterType === 'all' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300'
                 }`}
               >
                 Todos los momentos
@@ -131,7 +131,7 @@ export const Moments: React.FC = () => {
                   key={key}
                   onClick={() => { setFilterType(key); setShowFilters(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                    filterType === key ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                    filterType === key ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300'
                   }`}
                 >
                   <span>{config.icon}</span>
@@ -146,20 +146,20 @@ export const Moments: React.FC = () => {
       {/* Timeline */}
       {moments.length === 0 ? (
         <Card className="text-center py-12">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-10 h-10 text-gray-400" />
+          <div className="w-20 h-20 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-10 h-10 text-gray-400 dark:text-slate-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Aún no hay momentos especiales
           </h3>
-          <p className="text-gray-500 max-w-sm mx-auto">
+          <p className="text-gray-500 dark:text-slate-400 max-w-sm mx-auto">
             Cuando registres una inversión, marca el momento especial que la acompaña.
             Cada inversión puede ser un recuerdo para el futuro.
           </p>
         </Card>
       ) : filteredMoments.length === 0 ? (
         <Card className="text-center py-8">
-          <p className="text-gray-500">No hay momentos de este tipo aún</p>
+          <p className="text-gray-500 dark:text-slate-400">No hay momentos de este tipo aún</p>
         </Card>
       ) : (
         <div className="space-y-8">
@@ -167,9 +167,9 @@ export const Moments: React.FC = () => {
             <div key={year}>
               {/* Separador de año */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-                <span className="text-lg font-bold text-gray-400">{year}</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-200 dark:via-slate-700 to-transparent" />
+                <span className="text-lg font-bold text-gray-400 dark:text-slate-500">{year}</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-200 dark:via-slate-700 to-transparent" />
               </div>
 
               {/* Momentos del año */}
@@ -211,7 +211,7 @@ export const Moments: React.FC = () => {
                                 </span>
                               </div>
 
-                              <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-3">
                                 <Calendar className="w-4 h-4" />
                                 <span>
                                   {format(moment.date, "d 'de' MMMM, yyyy", { locale: es })}
@@ -219,27 +219,27 @@ export const Moments: React.FC = () => {
                               </div>
 
                               {moment.note && (
-                                <p className="text-gray-700 bg-gray-50 rounded-lg p-3 mb-3 italic">
+                                <p className="text-gray-700 dark:text-slate-300 bg-gray-50 dark:bg-slate-700 rounded-lg p-3 mb-3 italic">
                                   "{moment.note}"
                                 </p>
                               )}
 
-                              <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-slate-300">
                                 <div className="flex items-center gap-1">
                                   <TrendingUp className="w-4 h-4 text-growth-500" />
                                   <span className="font-medium">{moment.etfTicker}</span>
                                 </div>
-                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-400 dark:text-slate-500">•</span>
                                 <span className="money">{moment.units} unidades</span>
                               </div>
                             </div>
 
                             {/* Monto */}
                             <div className="text-right">
-                              <p className="text-2xl font-bold text-growth-600 money">
+                              <p className="text-2xl font-bold text-growth-600 dark:text-growth-400 money">
                                 {formatCurrency(moment.totalAmount, 'COP')}
                               </p>
-                              <p className="text-xs text-gray-500">invertido</p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">invertido</p>
                             </div>
                           </div>
 

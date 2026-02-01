@@ -63,6 +63,8 @@ interface ChapterStoreState {
       unlockAge: number;
       lockedTeaser: string;
       tags: string[];
+      mediaUrls: string[];
+      mediaCaptions: string[];
     }>,
     editNote?: string
   ) => Promise<void>;

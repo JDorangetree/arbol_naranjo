@@ -5,10 +5,12 @@
  * incluyendo carga, creación, edición y sistema de desbloqueo.
  */
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useChapterStore } from '../store/useChapterStore';
 import { useAuthStore } from '../store';
 import { Chapter, ChapterType, UnlockStatus } from '../types/emotional.types';
+import { uploadChapterImage } from '../services/firebase/storageService';
+import type { MediaItem } from '../components/chapters/MediaUploader';
 
 interface UseChaptersReturn {
   // Estado
@@ -29,6 +31,7 @@ interface UseChaptersReturn {
     unlockAge?: number;
     lockedTeaser?: string;
     tags?: string[];
+    mediaItems?: MediaItem[];
   }) => Promise<Chapter | null>;
   updateChapter: (
     chapterId: string,
@@ -39,7 +42,10 @@ interface UseChaptersReturn {
       unlockAge: number;
       lockedTeaser: string;
       tags: string[];
+      mediaUrls: string[];
+      mediaCaptions: string[];
     }>,
+    mediaItems?: MediaItem[],
     editNote?: string
   ) => Promise<void>;
   deleteChapter: (chapterId: string) => Promise<void>;
@@ -97,7 +103,7 @@ export function useChapters(): UseChaptersReturn {
     }
   }, [user?.id, childBirthDate, storeLoadChapters, loadUpcomingUnlocks]);
 
-  // Crear capítulo
+  // Crear capítulo con soporte para fotos
   const createChapter = useCallback(
     async (data: {
       title: string;
@@ -107,18 +113,55 @@ export function useChapters(): UseChaptersReturn {
       unlockAge?: number;
       lockedTeaser?: string;
       tags?: string[];
+      mediaItems?: MediaItem[];
     }): Promise<Chapter | null> => {
       if (!user?.id) return null;
       try {
-        return await createNewChapter(user.id, data);
+        // Primero crear el capítulo sin fotos para obtener el ID
+        const { mediaItems, ...chapterData } = data;
+        const newChapter = await createNewChapter(user.id, chapterData);
+
+        // Si hay fotos, subirlas y actualizar el capítulo
+        if (mediaItems && mediaItems.length > 0) {
+          const mediaUrls: string[] = [];
+          const mediaCaptions: string[] = [];
+
+          for (const item of mediaItems) {
+            if (item.file) {
+              // Subir archivo nuevo
+              const result = await uploadChapterImage(
+                user.id,
+                newChapter.id,
+                item.file
+              );
+              mediaUrls.push(result.url);
+              mediaCaptions.push(item.caption);
+            } else if (item.url && item.isExisting) {
+              // Mantener URL existente
+              mediaUrls.push(item.url);
+              mediaCaptions.push(item.caption);
+            }
+          }
+
+          // Actualizar el capítulo con las URLs de las fotos
+          if (mediaUrls.length > 0) {
+            await updateExistingChapter(
+              user.id,
+              newChapter.id,
+              { mediaUrls, mediaCaptions } as Record<string, unknown>
+            );
+          }
+        }
+
+        return newChapter;
       } catch {
         return null;
       }
     },
-    [user?.id, createNewChapter]
+    [user?.id, createNewChapter, updateExistingChapter]
   );
 
-  // Actualizar capítulo
+  // Actualizar capítulo con soporte para fotos
   const updateChapter = useCallback(
     async (
       chapterId: string,
@@ -129,11 +172,46 @@ export function useChapters(): UseChaptersReturn {
         unlockAge: number;
         lockedTeaser: string;
         tags: string[];
+        mediaUrls: string[];
+        mediaCaptions: string[];
       }>,
+      mediaItems?: MediaItem[],
       editNote?: string
     ) => {
       if (!user?.id) return;
-      await updateExistingChapter(user.id, chapterId, updates, editNote);
+
+      // Si hay mediaItems, procesar las fotos
+      if (mediaItems && mediaItems.length > 0) {
+        const mediaUrls: string[] = [];
+        const mediaCaptions: string[] = [];
+
+        for (const item of mediaItems) {
+          if (item.file) {
+            // Subir archivo nuevo
+            const result = await uploadChapterImage(
+              user.id,
+              chapterId,
+              item.file
+            );
+            mediaUrls.push(result.url);
+            mediaCaptions.push(item.caption);
+          } else if (item.url) {
+            // Mantener URL existente
+            mediaUrls.push(item.url);
+            mediaCaptions.push(item.caption);
+          }
+        }
+
+        // Agregar URLs al update
+        updates.mediaUrls = mediaUrls;
+        updates.mediaCaptions = mediaCaptions;
+      } else if (mediaItems && mediaItems.length === 0) {
+        // Si se eliminaron todas las fotos
+        updates.mediaUrls = [];
+        updates.mediaCaptions = [];
+      }
+
+      await updateExistingChapter(user.id, chapterId, updates as Record<string, unknown>, editNote);
     },
     [user?.id, updateExistingChapter]
   );

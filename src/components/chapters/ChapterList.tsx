@@ -67,7 +67,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
     return (
       <div className="text-center py-12">
         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-500">Cargando capitulos...</p>
+        <p className="text-gray-500 dark:text-slate-400">Cargando capitulos...</p>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
       {/* Header con filtros */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-primary-500" />
             Capitulos ({counts.all})
           </h2>
@@ -85,7 +85,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
           {/* Toggle filtros en móvil */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="sm:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+            className="sm:hidden p-2 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
           >
             <Filter className="w-5 h-5" />
           </button>
@@ -138,7 +138,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
               </FilterButton>
 
               {/* Separador */}
-              <div className="w-px h-6 bg-gray-200 mx-2 self-center hidden sm:block" />
+              <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 mx-2 self-center hidden sm:block" />
 
               {/* Filtros por tipo */}
               {presentTypes.map((type) => {
@@ -218,7 +218,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       ${
         active
           ? 'bg-primary-500 text-white shadow-sm'
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
       }
     `}
     style={
@@ -233,7 +233,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       <span
         className={`
           px-1.5 py-0.5 rounded-full text-xs
-          ${active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}
+          ${active ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500 dark:text-slate-400'}
         `}
       >
         {count}
@@ -282,11 +282,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({ filter, onCreate, showActions }
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="text-center py-12 bg-gray-50 rounded-xl"
+      className="text-center py-12 bg-gray-50 dark:bg-slate-800 rounded-xl"
     >
-      <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-700 mb-2">{title}</h3>
-      <p className="text-gray-500 mb-6 max-w-md mx-auto">{description}</p>
+      <BookOpen className="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-700 dark:text-slate-300 mb-2">{title}</h3>
+      <p className="text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">{description}</p>
       {showActions && filter !== 'locked' && (
         <Button onClick={onCreate} className="flex items-center gap-2 mx-auto">
           <Plus className="w-4 h-4" />

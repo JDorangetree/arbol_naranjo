@@ -90,11 +90,11 @@ export const AccessSettings: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
           <Shield className="w-8 h-8 text-primary-500" />
           Configuración de Acceso
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-gray-500 dark:text-slate-400 mt-1">
           Configura cómo tu hijo accede a ver su tesoro
         </p>
       </div>
@@ -102,14 +102,14 @@ export const AccessSettings: React.FC = () => {
       {/* Cambiar PIN */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-xl flex items-center justify-center">
             <Lock className="w-5 h-5 text-primary-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Código de Acceso (PIN)
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               {hasCustomPin
                 ? 'Tu hijo usa este código para entrar'
                 : 'El PIN por defecto es 1234. Te recomendamos cambiarlo.'}
@@ -121,7 +121,7 @@ export const AccessSettings: React.FC = () => {
           {/* PIN actual (solo si hay uno personalizado) */}
           {hasCustomPin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 PIN Actual
               </label>
               <div className="relative">
@@ -150,7 +150,7 @@ export const AccessSettings: React.FC = () => {
 
           {/* Nuevo PIN */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               {hasCustomPin ? 'Nuevo PIN' : 'Crear PIN'}
             </label>
             <div className="relative">
@@ -178,7 +178,7 @@ export const AccessSettings: React.FC = () => {
 
           {/* Confirmar PIN */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Confirmar PIN
             </label>
             <Input
@@ -196,7 +196,7 @@ export const AccessSettings: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-lg"
+              className="flex items-center gap-2 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-3 rounded-lg"
             >
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm">{error}</span>
@@ -207,7 +207,7 @@ export const AccessSettings: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg"
+              className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 p-3 rounded-lg"
             >
               <CheckCircle className="w-5 h-5" />
               <span className="text-sm">{success}</span>
@@ -224,14 +224,14 @@ export const AccessSettings: React.FC = () => {
       {/* Secciones permitidas */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-growth-100 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-growth-100 dark:bg-growth-900/50 rounded-xl flex items-center justify-center">
             <Eye className="w-5 h-5 text-growth-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Secciones Visibles
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               Elige qué puede ver tu hijo cuando accede
             </p>
           </div>
@@ -246,14 +246,14 @@ export const AccessSettings: React.FC = () => {
                 className={`
                   flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all
                   ${isEnabled
-                    ? 'border-growth-300 bg-growth-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-growth-300 dark:border-growth-700 bg-growth-50 dark:bg-growth-900/30'
+                    : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
                   }
                 `}
               >
                 <div>
-                  <p className="font-medium text-gray-900">{section.label}</p>
-                  <p className="text-sm text-gray-500">{section.description}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{section.label}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">{section.description}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -268,25 +268,25 @@ export const AccessSettings: React.FC = () => {
       </Card>
 
       {/* Información */}
-      <Card className="p-6 bg-blue-50 border-blue-200">
-        <h3 className="font-semibold text-blue-900 mb-2">
+      <Card className="p-6 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+        <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
           ¿Cómo funciona?
         </h3>
-        <ul className="space-y-2 text-sm text-blue-800">
+        <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
           <li className="flex items-start gap-2">
-            <span className="text-blue-500 mt-0.5">1.</span>
+            <span className="text-blue-500 dark:text-blue-400 mt-0.5">1.</span>
             Tu hijo va a la página de inicio y hace clic en "Soy el hijo, quiero ver mi tesoro"
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-500 mt-0.5">2.</span>
+            <span className="text-blue-500 dark:text-blue-400 mt-0.5">2.</span>
             Ingresa el código PIN que configuraste aquí
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-500 mt-0.5">3.</span>
+            <span className="text-blue-500 dark:text-blue-400 mt-0.5">3.</span>
             Puede ver todo en modo lectura, sin poder modificar nada
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-500 mt-0.5">4.</span>
+            <span className="text-blue-500 dark:text-blue-400 mt-0.5">4.</span>
             Los capítulos bloqueados solo se mostrarán cuando alcance la edad configurada
           </li>
         </ul>

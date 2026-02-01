@@ -45,13 +45,13 @@ export const Header: React.FC = () => {
   };
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: Home, showInReadOnly: true },
-    { to: '/investments', label: 'Inversiones', icon: TrendingUp, showInReadOnly: false },
-    { to: '/story', label: 'Historia', icon: BookHeart, showInReadOnly: true },
-    { to: '/moments', label: 'Momentos', icon: Camera, showInReadOnly: true },
-    { to: '/reports', label: 'Reportes', icon: FileText, showInReadOnly: false },
-    { to: '/export', label: 'Exportar', icon: Download, showInReadOnly: false },
-    { to: '/history', label: 'Historial', icon: History, showInReadOnly: true },
+    { to: '/', label: 'Mi Árbol', icon: Home, showInReadOnly: true },
+    { to: '/investments', label: 'Sembrar', icon: TrendingUp, showInReadOnly: false },
+    { to: '/story', label: 'Mi Historia', icon: BookHeart, showInReadOnly: true },
+    { to: '/moments', label: 'Recuerdos', icon: Camera, showInReadOnly: true },
+    { to: '/reports', label: 'Cosecha Anual', icon: FileText, showInReadOnly: false },
+    { to: '/export', label: 'Guardar', icon: Download, showInReadOnly: false },
+    { to: '/history', label: 'El Camino', icon: History, showInReadOnly: true },
   ];
 
   const filteredNavItems = navItems.filter(item => !isReadOnly || item.showInReadOnly);
@@ -127,7 +127,7 @@ export const Header: React.FC = () => {
                     <Link
                       to="/settings/access"
                       className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                      title="Configurar acceso del hijo"
+                      title="Llave del Tesoro"
                     >
                       <Shield className="w-5 h-5" />
                     </Link>
@@ -135,7 +135,7 @@ export const Header: React.FC = () => {
                     <Link
                       to="/settings/instruments"
                       className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                      title="Configurar instrumentos"
+                      title="Herramientas"
                     >
                       <Settings className="w-5 h-5" />
                     </Link>
@@ -145,7 +145,7 @@ export const Header: React.FC = () => {
                 <button
                   onClick={handleLogout}
                   className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                  title={isReadOnly ? 'Salir' : 'Cerrar sesión'}
+                  title={isReadOnly ? 'Volver al inicio' : 'Hasta pronto'}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -237,7 +237,7 @@ export const Header: React.FC = () => {
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors touch-active"
                   >
                     <Shield className="w-5 h-5" />
-                    <span className="font-medium">Acceso del Hijo</span>
+                    <span className="font-medium">Llave del Tesoro</span>
                   </Link>
                   <Link
                     to="/settings/instruments"
@@ -245,7 +245,7 @@ export const Header: React.FC = () => {
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors touch-active"
                   >
                     <Settings className="w-5 h-5" />
-                    <span className="font-medium">Configuración</span>
+                    <span className="font-medium">Herramientas</span>
                   </Link>
                 </div>
               )}
@@ -253,10 +253,10 @@ export const Header: React.FC = () => {
               <div className="p-2 border-t border-gray-100 dark:border-slate-800">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors touch-active"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors touch-active"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span className="font-medium">{isReadOnly ? 'Salir' : 'Cerrar Sesión'}</span>
+                  <span className="font-medium">{isReadOnly ? 'Volver al inicio' : 'Hasta pronto'}</span>
                 </button>
               </div>
             </motion.div>

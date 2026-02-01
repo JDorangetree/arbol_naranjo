@@ -1,7 +1,7 @@
 {
-  "name": "Bitácora Patrimonial Familiar",
-  "short_name": "Patrimonio",
-  "description": "Aplicación para documentar y visualizar el patrimonio familiar de forma educativa",
+  "name": "El Tesoro de Tomás",
+  "short_name": "Tesoro Tomás",
+  "description": "Una historia de decisiones, paciencia y crecimiento patrimonial",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",

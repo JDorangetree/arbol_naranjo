@@ -128,13 +128,13 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               className="space-y-4"
             >
               <div className="text-center mb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 rounded-full mb-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-full mb-2">
                   <TreeDeciduous className="w-6 h-6 text-primary-500" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   ¿En qué instrumento deseas invertir?
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                   Selecciona el activo para este aporte
                 </p>
               </div>
@@ -176,13 +176,13 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               className="space-y-4"
             >
               <div className="text-center mb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-gold-100 rounded-full mb-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-gold-100 dark:bg-gold-900/50 rounded-full mb-2">
                   <Coins className="w-6 h-6 text-gold-500" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   ¿Cuánto vas a invertir?
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                   Ingresa los detalles de tu inversión en {selectedETF?.ticker}
                 </p>
               </div>
@@ -207,10 +207,10 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               />
 
               {/* Vista previa del total */}
-              <div className="bg-gradient-to-r from-growth-50 to-gold-50 rounded-xl p-4">
+              <div className="bg-gradient-to-r from-growth-50 to-gold-50 dark:from-growth-900/30 dark:to-gold-900/30 rounded-xl p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total a invertir:</span>
-                  <span className="text-2xl font-bold text-growth-600 money">
+                  <span className="text-gray-600 dark:text-slate-300">Total a invertir:</span>
+                  <span className="text-2xl font-bold text-growth-600 dark:text-growth-400 money">
                     {formatCurrency(total, 'COP')}
                   </span>
                 </div>
@@ -249,13 +249,13 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               className="space-y-4"
             >
               <div className="text-center mb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-trust-100 rounded-full mb-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-trust-100 dark:bg-trust-900/50 rounded-full mb-2">
                   <Sparkles className="w-6 h-6 text-trust-500" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   ¿Es un momento especial?
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                   Agrega un recuerdo para el futuro
                 </p>
               </div>
@@ -270,7 +270,7 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
 
               {/* Selector visual de momentos especiales */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Tipo de momento
                 </label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
@@ -281,12 +281,12 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                     className={clsx(
                       'flex flex-col items-center p-3 rounded-xl border-2 transition-all',
                       selectedMilestone === ''
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                     )}
                   >
                     <span className="text-2xl mb-1">📝</span>
-                    <span className="text-xs text-center text-gray-600">Normal</span>
+                    <span className="text-xs text-center text-gray-600 dark:text-slate-300">Normal</span>
                   </button>
 
                   {/* Opciones de momentos especiales */}
@@ -298,12 +298,12 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                       className={clsx(
                         'flex flex-col items-center p-3 rounded-xl border-2 transition-all',
                         selectedMilestone === key
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                          : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                       )}
                     >
                       <span className="text-2xl mb-1">{config.icon}</span>
-                      <span className="text-xs text-center text-gray-600 line-clamp-2">
+                      <span className="text-xs text-center text-gray-600 dark:text-slate-300 line-clamp-2">
                         {config.label}
                       </span>
                     </button>
@@ -313,7 +313,7 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                   <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-sm text-gray-500 mt-2 italic"
+                    className="text-sm text-gray-500 dark:text-slate-400 mt-2 italic"
                   >
                     {MILESTONE_CONFIG[selectedMilestone].description}
                   </motion.p>
@@ -321,11 +321,11 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Nota para el futuro (opcional)
                 </label>
                 <textarea
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200 resize-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200 resize-none placeholder:text-gray-400 dark:placeholder:text-slate-500"
                   rows={3}
                   placeholder="Ej: Esta inversión la hicimos el día que aprendiste a caminar..."
                   {...register('note')}
@@ -333,29 +333,29 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               </div>
 
               {/* Resumen */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                <h4 className="font-semibold text-gray-900">Resumen:</h4>
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 space-y-2">
+                <h4 className="font-semibold text-gray-900 dark:text-white">Resumen:</h4>
                 <div className="text-sm space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">ETF:</span>
-                    <span className="font-medium">
+                    <span className="text-gray-500 dark:text-slate-400">ETF:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {selectedETF?.ticker} - {selectedETF?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Unidades:</span>
-                    <span className="font-medium money">{units}</span>
+                    <span className="text-gray-500 dark:text-slate-400">Unidades:</span>
+                    <span className="font-medium text-gray-900 dark:text-white money">{units}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Total:</span>
-                    <span className="font-bold text-growth-600 money">
+                    <span className="text-gray-500 dark:text-slate-400">Total:</span>
+                    <span className="font-bold text-growth-600 dark:text-growth-400 money">
                       {formatCurrency(total, 'COP')}
                     </span>
                   </div>
                   {selectedMilestone && MILESTONE_CONFIG[selectedMilestone] && (
-                    <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                      <span className="text-gray-500">Momento:</span>
-                      <span className="font-medium flex items-center gap-1">
+                    <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-slate-700 mt-2">
+                      <span className="text-gray-500 dark:text-slate-400">Momento:</span>
+                      <span className="font-medium text-gray-900 dark:text-white flex items-center gap-1">
                         {MILESTONE_CONFIG[selectedMilestone].icon}{' '}
                         {MILESTONE_CONFIG[selectedMilestone].label}
                       </span>

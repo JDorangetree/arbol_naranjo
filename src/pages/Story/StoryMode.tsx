@@ -18,7 +18,7 @@ import { useAuthStore } from '../../store';
 import { useIsReadOnly } from '../../store/useAppModeStore';
 import { ChapterList } from '../../components/chapters/ChapterList';
 import { ChapterViewer } from '../../components/chapters/ChapterViewer';
-import { ChapterForm } from '../../components/chapters/ChapterForm';
+import { ChapterForm, MediaItem } from '../../components/chapters';
 import { Card, Button } from '../../components/common';
 import { Chapter } from '../../types/emotional.types';
 
@@ -83,14 +83,19 @@ export const StoryMode: React.FC = () => {
     unlockAge?: number;
     lockedTeaser?: string;
     tags?: string[];
+    mediaItems?: MediaItem[];
   }) => {
+    const { mediaItems, ...chapterData } = data;
+
     if (editingChapter) {
-      await updateChapter(editingChapter.id, data);
+      await updateChapter(editingChapter.id, chapterData, mediaItems);
     } else {
       await createChapter(data);
     }
     setShowForm(false);
     setEditingChapter(null);
+    // Recargar capítulos para ver las fotos actualizadas
+    await loadChapters();
   };
 
   const handleCloseViewer = () => {
@@ -127,11 +132,11 @@ export const StoryMode: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <BookOpen className="w-8 h-8 text-primary-500" />
             Modo Historia
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 dark:text-slate-400 mt-1">
             {isReadOnly
               ? 'Descubre la historia de tu tesoro'
               : 'Escribe la historia del tesoro de tu hijo'}
@@ -139,9 +144,9 @@ export const StoryMode: React.FC = () => {
         </div>
 
         {childAge !== null && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-xl">
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-900/30 rounded-xl">
             <Gift className="w-5 h-5 text-primary-500" />
-            <span className="text-sm text-primary-700">
+            <span className="text-sm text-primary-700 dark:text-primary-300">
               Tu hijo tiene <strong>{childAge} {childAge === 1 ? 'año' : 'años'}</strong>
             </span>
           </div>
@@ -171,10 +176,10 @@ export const StoryMode: React.FC = () => {
 
       {/* Próximos desbloqueos */}
       {upcomingUnlocks.length > 0 && (
-        <Card className="p-6 bg-gradient-to-r from-primary-50 to-growth-50">
+        <Card className="p-6 bg-gradient-to-r from-primary-50 to-growth-50 dark:from-primary-900/30 dark:to-growth-900/30">
           <div className="flex items-center gap-3 mb-4">
             <Clock className="w-5 h-5 text-primary-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Próximos desbloqueos
             </h2>
           </div>
@@ -184,12 +189,12 @@ export const StoryMode: React.FC = () => {
               return (
                 <div
                   key={chapter.id}
-                  className="bg-white rounded-lg p-4 shadow-sm"
+                  className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm"
                 >
-                  <p className="font-medium text-gray-900 mb-1">
+                  <p className="font-medium text-gray-900 dark:text-white mb-1">
                     {chapter.title}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
                     Se desbloquea a los {chapter.unlockAge} años
                     {status?.yearsUntilUnlock && status.yearsUntilUnlock > 0 && (
                       <span className="text-primary-500 ml-1">
@@ -257,13 +262,13 @@ export const StoryMode: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Eliminar capítulo
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-slate-400 mb-6">
                 ¿Estás seguro de que deseas eliminar "{showDeleteConfirm.title}"?
                 Esta acción no se puede deshacer.
               </p>

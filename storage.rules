@@ -1,0 +1,89 @@
+rules_version = '2';
+
+/**
+ * Firebase Storage Security Rules - El Tesoro de Tomás
+ *
+ * Estructura de almacenamiento:
+ * - users/{userId}/chapters/{chapterId}/{filename}
+ * - users/{userId}/media/{filename}
+ *
+ * Principios:
+ * 1. Solo el usuario autenticado puede acceder a sus archivos
+ * 2. Limitar tipos de archivo permitidos (imágenes, videos)
+ * 3. Limitar tamaño máximo de archivo
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Función para verificar autenticación
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Función para verificar propiedad
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Función para validar tipo de imagen
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024; // 10MB máximo
+    }
+
+    // Función para validar tipo de video
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/.*')
+        && request.resource.size < 100 * 1024 * 1024; // 100MB máximo
+    }
+
+    // Función para validar cualquier media permitido
+    function isValidMedia() {
+      return isValidImage() || isValidVideo();
+    }
+
+    // ============================================
+    // ARCHIVOS DE USUARIO
+    // ============================================
+
+    match /users/{userId}/{allPaths=**} {
+      // Lectura: solo el propietario
+      allow read: if isOwner(userId);
+
+      // Escritura: solo el propietario con validación de tipo
+      allow write: if isOwner(userId) && isValidMedia();
+
+      // Eliminar: solo el propietario
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // ARCHIVOS DE CAPÍTULOS
+    // ============================================
+
+    match /users/{userId}/chapters/{chapterId}/{filename} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidMedia();
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // MEDIA GENERAL DEL USUARIO
+    // ============================================
+
+    match /users/{userId}/media/{filename} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidMedia();
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // REGLA POR DEFECTO: DENEGAR TODO
+    // ============================================
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -86,7 +86,7 @@ export const ChildAccess: React.FC = () => {
       lockChildMode();
       navigate('/');
     } else {
-      setError('Código incorrecto');
+      setError('Hmm, ese no es el código. Pide ayuda a mamá o papá.');
       setIsShaking(true);
       setTimeout(() => {
         setIsShaking(false);
@@ -99,7 +99,7 @@ export const ChildAccess: React.FC = () => {
   const childName = user?.childName || 'pequeño explorador';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -108,7 +108,7 @@ export const ChildAccess: React.FC = () => {
         {/* Botón volver */}
         <button
           onClick={() => navigate('/login')}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+          className="flex items-center gap-2 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al inicio
@@ -131,10 +131,10 @@ export const ChildAccess: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               ¡Hola, {childName}!
             </h1>
-            <p className="text-gray-500 mb-8">
+            <p className="text-gray-500 dark:text-slate-400 mb-8">
               Ingresa tu código secreto para ver tu tesoro
             </p>
           </motion.div>
@@ -159,11 +159,12 @@ export const ChildAccess: React.FC = () => {
                 className={`
                   w-14 h-16 text-center text-2xl font-bold rounded-xl border-2
                   focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all
+                  text-gray-900 dark:text-white
                   ${error
-                    ? 'border-red-300 bg-red-50'
+                    ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/30'
                     : digit
-                      ? 'border-primary-300 bg-primary-50'
-                      : 'border-gray-200 bg-white'
+                      ? 'border-primary-300 bg-primary-50 dark:bg-primary-900/30'
+                      : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'
                   }
                 `}
               />
@@ -175,7 +176,7 @@ export const ChildAccess: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center gap-2 text-red-500 mb-6"
+              className="flex items-center justify-center gap-2 text-primary-600 dark:text-primary-400 mb-6 bg-primary-50 dark:bg-primary-900/30 p-3 rounded-lg"
             >
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">{error}</span>
@@ -183,7 +184,7 @@ export const ChildAccess: React.FC = () => {
           )}
 
           {/* Hint */}
-          <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+          <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-slate-500 text-sm">
             <Lock className="w-4 h-4" />
             <span>Pide el código a mamá o papá</span>
           </div>
@@ -191,7 +192,7 @@ export const ChildAccess: React.FC = () => {
 
         {/* Decoración */}
         <div className="mt-8 text-center">
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 dark:text-slate-500 text-sm">
             Tu historia te espera...
           </p>
         </div>

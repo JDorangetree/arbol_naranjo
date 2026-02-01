@@ -128,7 +128,7 @@ export const NaranjoEvolutivo: React.FC<NaranjoEvolutivoProps> = ({
   return (
     <div className={`relative ${className}`}>
       {/* Contenedor principal */}
-      <div className="bg-gradient-to-b from-sky-100 via-sky-50 to-trunk-100 rounded-3xl p-6 overflow-hidden">
+      <div className="bg-gradient-to-b from-sky-100 via-sky-50 to-trunk-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 rounded-3xl p-6 overflow-hidden">
         {/* SVG de la escena */}
         <svg viewBox="0 0 400 300" className="w-full h-auto max-h-[400px]">
           {/* Cielo con nubes sutiles */}
@@ -483,30 +483,12 @@ export const NaranjoEvolutivo: React.FC<NaranjoEvolutivoProps> = ({
               {stage === 'flowering' && '🌸'}
               {stage === 'fruiting' && '🍊'}
             </span>
-            <h3 className="text-xl font-bold text-gray-900">{getStageLabel(stage)}</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{getStageLabel(stage)}</h3>
             {showTower && <span className="text-xl">🏰</span>}
           </div>
-          <p className="text-gray-600 text-sm max-w-md mx-auto">
+          <p className="text-gray-600 dark:text-slate-300 text-sm max-w-md mx-auto">
             {getStageMessage(stage, childName)}
           </p>
-
-          {/* Barra de progreso hacia siguiente etapa */}
-          {stage !== 'fruiting' && (
-            <div className="mt-4 max-w-xs mx-auto">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Progreso</span>
-                <span>{Math.round(progress * 100)}%</span>
-              </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-growth-400 to-primary-500 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress * 100}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' as const }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

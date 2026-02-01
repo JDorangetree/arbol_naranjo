@@ -43,7 +43,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               error
-                ? 'border-red-300 dark:border-red-500 focus:ring-red-500'
+                ? 'border-primary-300 dark:border-primary-500 focus:ring-primary-500'
                 : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500',
               className
             )}
@@ -59,7 +59,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p
             className={clsx(
               'mt-1 text-sm',
-              error ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'
+              error ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-slate-400'
             )}
           >
             {error || helperText}
@@ -100,7 +100,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             'focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none',
             'bg-white dark:bg-slate-800 text-gray-900 dark:text-white cursor-pointer',
             error
-              ? 'border-red-300 dark:border-red-500 focus:ring-red-500'
+              ? 'border-primary-300 dark:border-primary-500 focus:ring-primary-500'
               : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500',
             className
           )}
@@ -112,7 +112,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-1 text-sm text-primary-600 dark:text-primary-400">{error}</p>}
       </div>
     );
   }

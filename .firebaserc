@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "dev": "patrimonio-dev-6bd81",
+    "prod": "patrimonio-f40dd"
+  },
+  "targets": {},
+  "etags": {}
+}

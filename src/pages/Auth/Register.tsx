@@ -86,7 +86,7 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,12 +102,12 @@ export const Register: React.FC = () => {
           >
             <TreeDeciduous className="w-10 h-10 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {step === 1 && 'Crea tu cuenta'}
             {step === 2 && '¿Cómo se llama?'}
             {step === 3 && '¡Todo listo!'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-slate-400">
             {step === 1 && 'Comienza a construir el futuro de tu familia'}
             {step === 2 && 'Cuéntanos sobre tu pequeño/a'}
             {step === 3 && `El árbol de ${childName} está listo para crecer`}
@@ -124,14 +124,14 @@ export const Register: React.FC = () => {
                   ? 'w-8 bg-primary-500'
                   : s < step
                   ? 'w-2 bg-growth-500'
-                  : 'w-2 bg-gray-300'
+                  : 'w-2 bg-gray-300 dark:bg-slate-600'
               }`}
             />
           ))}
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait">
               {/* Paso 1: Datos de cuenta */}
@@ -200,7 +200,7 @@ export const Register: React.FC = () => {
                   className="space-y-4"
                 >
                   <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-3">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/50 rounded-full mb-3">
                       <Baby className="w-8 h-8 text-primary-500" />
                     </div>
                   </div>
@@ -261,10 +261,10 @@ export const Register: React.FC = () => {
                     >
                       <Sparkles className="w-12 h-12 text-white" />
                     </motion.div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                       ¡Estás a un paso de comenzar!
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-slate-400">
                       Juntos vamos a plantar y cultivar el árbol del tesoro de{' '}
                       <span className="font-semibold text-primary-500">
                         {childName}
@@ -274,13 +274,13 @@ export const Register: React.FC = () => {
                   </div>
 
                   {showError && error && (
-                    <motion.p
+                    <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg"
+                      className="text-primary-700 dark:text-primary-300 text-sm text-center bg-primary-50 dark:bg-primary-900/30 p-3 rounded-lg border border-primary-200 dark:border-primary-700"
                     >
                       {error}
-                    </motion.p>
+                    </motion.div>
                   )}
 
                   <div className="flex gap-3">
@@ -309,7 +309,7 @@ export const Register: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               ¿Ya tienes una cuenta?{' '}
               <Link
                 to="/login"

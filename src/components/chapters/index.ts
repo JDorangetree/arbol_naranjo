@@ -3,3 +3,5 @@ export { ChapterForm } from './ChapterForm';
 export { ChapterList } from './ChapterList';
 export { ChapterViewer } from './ChapterViewer';
 export { LockedChapter } from './LockedChapter';
+export { MediaUploader } from './MediaUploader';
+export type { MediaItem } from './MediaUploader';

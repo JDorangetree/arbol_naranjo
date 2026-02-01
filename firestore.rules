@@ -1,0 +1,226 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules - El Tesoro de Tomás
+ *
+ * Estructura de datos:
+ * - users/{userId} - Datos del usuario padre
+ *   - investments/{investmentId} - Inversiones del usuario
+ *   - transactions/{transactionId} - Transacciones del usuario
+ *   - financial/data/transactions/{transactionId} - (legacy)
+ *   - financial/data/snapshots/{snapshotId}
+ *   - financial/data/etfs/{etfId}
+ *   - emotional/data/chapters/{chapterId}
+ *   - emotional/data/yearlyNarratives/{narrativeId}
+ *   - metadata/data/transactionMeta/{metadataId}
+ *   - metadata/data/periodMeta/{periodId}
+ *
+ * Principios de seguridad:
+ * 1. Solo el usuario autenticado puede acceder a sus propios datos
+ * 2. Validación de datos en escritura
+ * 3. No se permite eliminar datos financieros (solo marcar como eliminados)
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // FUNCIONES AUXILIARES
+    // ============================================
+
+    // Verifica si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verifica si el usuario es el propietario del documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Valida que un campo string no esté vacío
+    function isNonEmptyString(field) {
+      return field is string && field.size() > 0;
+    }
+
+    // Valida que un número sea positivo
+    function isPositiveNumber(field) {
+      return field is number && field >= 0;
+    }
+
+    // ============================================
+    // REGLAS PARA USUARIOS
+    // ============================================
+
+    match /users/{userId} {
+      // Permitir lectura solo al propietario
+      allow read: if isOwner(userId);
+
+      // Permitir creación si es el propio usuario y tiene campos requeridos
+      allow create: if isOwner(userId)
+        && isNonEmptyString(request.resource.data.email)
+        && isNonEmptyString(request.resource.data.childName);
+
+      // Permitir actualización solo al propietario
+      allow update: if isOwner(userId);
+
+      // No permitir eliminar usuarios (soft delete en su lugar)
+      allow delete: if false;
+
+      // ============================================
+      // SUBCOLECCIÓN: INVESTMENTS (Principal)
+      // ============================================
+
+      match /investments/{investmentId} {
+        allow read: if isOwner(userId);
+
+        // Crear inversión con validación
+        allow create: if isOwner(userId)
+          && isNonEmptyString(request.resource.data.etfId)
+          && isPositiveNumber(request.resource.data.totalUnits)
+          && isPositiveNumber(request.resource.data.totalInvested);
+
+        // Actualizar inversión
+        allow update: if isOwner(userId);
+
+        // No eliminar inversiones (integridad financiera)
+        allow delete: if false;
+      }
+
+      // ============================================
+      // SUBCOLECCIÓN: TRANSACTIONS (Principal)
+      // ============================================
+
+      match /transactions/{transactionId} {
+        allow read: if isOwner(userId);
+
+        // Crear transacción con validación
+        allow create: if isOwner(userId)
+          && isNonEmptyString(request.resource.data.type)
+          && isPositiveNumber(request.resource.data.units)
+          && isPositiveNumber(request.resource.data.pricePerUnit);
+
+        // Actualizar solo campos permitidos (no cambiar tipo ni montos)
+        allow update: if isOwner(userId)
+          && request.resource.data.type == resource.data.type
+          && request.resource.data.units == resource.data.units
+          && request.resource.data.pricePerUnit == resource.data.pricePerUnit;
+
+        // No permitir eliminar transacciones
+        allow delete: if false;
+      }
+
+      // ============================================
+      // SUBCOLECCIÓN: FINANCIAL (Legacy + Snapshots/ETFs)
+      // ============================================
+
+      match /financial/{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      // Reglas específicas para transacciones financieras (legacy)
+      match /financial/data/transactions/{transactionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if false;
+      }
+
+      // Reglas para snapshots
+      match /financial/data/snapshots/{snapshotId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if false;
+      }
+
+      // Reglas para ETFs/instrumentos
+      match /financial/data/etfs/{etfId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // ============================================
+      // SUBCOLECCIÓN: EMOTIONAL (Capítulos/Narrativas)
+      // ============================================
+
+      match /emotional/{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      // Reglas específicas para capítulos
+      match /emotional/data/chapters/{chapterId} {
+        allow read: if isOwner(userId);
+
+        // Crear capítulo con validación
+        allow create: if isOwner(userId)
+          && isNonEmptyString(request.resource.data.title)
+          && isNonEmptyString(request.resource.data.type)
+          && isNonEmptyString(request.resource.data.content);
+
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Reglas para narrativas anuales
+      match /emotional/data/yearlyNarratives/{narrativeId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // ============================================
+      // SUBCOLECCIÓN: METADATA
+      // ============================================
+
+      match /metadata/{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      match /metadata/data/transactionMeta/{metaId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      match /metadata/data/periodMeta/{periodId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      // ============================================
+      // SUBCOLECCIÓN: MIGRATION (para tracking)
+      // ============================================
+
+      match /migration/{migrationId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // ============================================
+    // COLECCIÓN: ETF_REFERENCE (datos públicos de ETFs)
+    // ============================================
+
+    match /etf_reference/{etfId} {
+      // Cualquier usuario autenticado puede leer referencias de ETFs
+      allow read: if isAuthenticated();
+
+      // Solo admins pueden escribir (por ahora, nadie desde cliente)
+      allow write: if false;
+    }
+
+    // ============================================
+    // REGLA POR DEFECTO: DENEGAR TODO
+    // ============================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

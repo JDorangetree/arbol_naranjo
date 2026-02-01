@@ -21,7 +21,7 @@ export const YearSelector: React.FC<YearSelectorProps> = ({
 }) => {
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
         Selecciona el año del reporte
       </label>
 
@@ -37,11 +37,11 @@ export const YearSelector: React.FC<YearSelectorProps> = ({
           className={`
             w-full pl-10 pr-10 py-3
             appearance-none
-            bg-white
-            border-2 border-primary-200
+            bg-white dark:bg-slate-800
+            border-2 border-primary-200 dark:border-primary-700
             rounded-xl
-            text-lg font-bold text-primary-700
-            focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200
+            text-lg font-bold text-primary-700 dark:text-primary-300
+            focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-800
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all
           `}
@@ -59,7 +59,7 @@ export const YearSelector: React.FC<YearSelectorProps> = ({
       </div>
 
       {availableYears.length === 0 && (
-        <p className="mt-2 text-sm text-amber-600">
+        <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
           No hay años con transacciones registradas
         </p>
       )}

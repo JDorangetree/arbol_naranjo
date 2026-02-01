@@ -94,7 +94,7 @@ export const ETFSelector: React.FC<ETFSelectorProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 dark:text-slate-400">
         <p className="mb-2">No hay instrumentos configurados.</p>
         <p className="text-sm">Ve a Configuración para seleccionar los instrumentos que deseas usar.</p>
       </div>
@@ -116,8 +116,8 @@ export const ETFSelector: React.FC<ETFSelectorProps> = ({
           className={clsx(
             'relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
             selectedId === item.id
-              ? 'border-primary-500 bg-primary-50'
-              : 'border-gray-200 hover:border-gray-300 bg-white'
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+              : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
           )}
         >
           <div className="flex items-center gap-4">
@@ -132,13 +132,13 @@ export const ETFSelector: React.FC<ETFSelectorProps> = ({
             {/* Info del instrumento */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-gray-900">{item.ticker}</h4>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                <h4 className="font-bold text-gray-900 dark:text-white">{item.ticker}</h4>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">
                   {item.currency}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 truncate">{item.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{item.name}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                 {getCategoryLabel(item)}
               </p>
             </div>

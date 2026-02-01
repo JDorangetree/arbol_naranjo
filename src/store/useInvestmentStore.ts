@@ -87,7 +87,7 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
 
       if (investment) {
         // Agregar a la inversión existente
-        await addToInvestment(investment.id, units, pricePerUnit);
+        await addToInvestment(userId, investment.id, units, pricePerUnit);
         investmentId = investment.id;
       } else {
         // Crear nueva inversión

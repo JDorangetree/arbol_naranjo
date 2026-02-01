@@ -40,7 +40,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-growth-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,16 +56,16 @@ export const Login: React.FC = () => {
           >
             <NaranjoYTorre size="sm" fruitCount={4} />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Bienvenido de vuelta
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-slate-400">
             Continúa cultivando el futuro de tu familia
           </p>
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
               label="Correo electrónico"
@@ -86,13 +86,13 @@ export const Login: React.FC = () => {
             />
 
             {showError && error && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg"
+                className="text-primary-700 dark:text-primary-300 text-sm text-center bg-primary-50 dark:bg-primary-900/30 p-3 rounded-lg border border-primary-200 dark:border-primary-700"
               >
                 {error}
-              </motion.p>
+              </motion.div>
             )}
 
             <Button
@@ -106,7 +106,7 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               ¿No tienes una cuenta?{' '}
               <Link
                 to="/register"
@@ -118,10 +118,10 @@ export const Login: React.FC = () => {
           </div>
 
           {/* Acceso para el hijo */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-slate-700">
             <Link
               to="/child-access"
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-primary-50 to-growth-50 hover:from-primary-100 hover:to-growth-100 rounded-xl text-gray-700 font-medium transition-all"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-primary-50 to-growth-50 dark:from-primary-900/30 dark:to-growth-900/30 hover:from-primary-100 hover:to-growth-100 dark:hover:from-primary-900/50 dark:hover:to-growth-900/50 rounded-xl text-gray-700 dark:text-slate-300 font-medium transition-all"
             >
               <Sparkles className="w-5 h-5 text-primary-500" />
               Soy el hijo, quiero ver mi tesoro

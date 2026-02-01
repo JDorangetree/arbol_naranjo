@@ -6,6 +6,7 @@
  * - Edad de desbloqueo
  * - Tags
  * - Plantillas de contenido
+ * - Fotos con descripciones
  */
 
 import React, { useState, useEffect } from 'react';
@@ -18,6 +19,7 @@ import {
   Tag,
   FileText,
   Sparkles,
+  Image,
 } from 'lucide-react';
 import { Button, Card, Input } from '../common';
 import {
@@ -26,6 +28,7 @@ import {
   CHAPTER_TYPE_CONFIGS,
   CHAPTER_TEMPLATES,
 } from '../../types/emotional.types';
+import { MediaUploader, MediaItem } from './MediaUploader';
 
 interface ChapterFormProps {
   chapter?: Chapter | null;
@@ -37,6 +40,7 @@ interface ChapterFormProps {
     unlockAge?: number;
     lockedTeaser?: string;
     tags?: string[];
+    mediaItems?: MediaItem[];
   }) => Promise<void>;
   onCancel: () => void;
   isSaving?: boolean;
@@ -59,6 +63,19 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
   const [lockedTeaser, setLockedTeaser] = useState(chapter?.lockedTeaser || '');
   const [tagsInput, setTagsInput] = useState(chapter?.tags?.join(', ') || '');
   const [showTemplateHint, setShowTemplateHint] = useState(false);
+
+  // Media state - inicializar con fotos existentes si las hay
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(() => {
+    if (chapter?.mediaUrls && chapter.mediaUrls.length > 0) {
+      return chapter.mediaUrls.map((url, index) => ({
+        id: `existing_${index}`,
+        url,
+        caption: chapter.mediaCaptions?.[index] || '',
+        isExisting: true,
+      }));
+    }
+    return [];
+  });
 
   // Obtener config del tipo actual
   const typeConfig = CHAPTER_TYPE_CONFIGS.find((c) => c.type === type);
@@ -96,6 +113,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
       unlockAge,
       lockedTeaser: lockedTeaser || undefined,
       tags: parseTags(tagsInput),
+      mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
     });
   };
 
@@ -111,20 +129,20 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-8"
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full my-8"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-primary-500" />
               {isEditing ? 'Editar Capítulo' : 'Nuevo Capítulo'}
             </h2>
             <button
               type="button"
               onClick={onCancel}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,7 +152,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
           <div className="px-6 py-6 space-y-6 max-h-[calc(100vh-250px)] overflow-y-auto">
             {/* Tipo de capítulo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Tipo de contenido
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -147,7 +165,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                       p-3 rounded-xl text-left transition-all border-2
                       ${type === config.type
                         ? 'border-current shadow-md'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                       }
                     `}
                     style={{
@@ -156,12 +174,12 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                     }}
                   >
                     <p
-                      className="font-medium text-sm"
-                      style={{ color: type === config.type ? config.color : '#374151' }}
+                      className={`font-medium text-sm ${type !== config.type ? 'text-gray-700 dark:text-slate-200' : ''}`}
+                      style={type === config.type ? { color: config.color } : undefined}
                     >
                       {config.label}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                       {config.description}
                     </p>
                   </button>
@@ -171,7 +189,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
 
             {/* Título */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Título
               </label>
               <Input
@@ -185,7 +203,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
             {/* Contenido */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Contenido
                 </label>
                 {showTemplateHint && !content && (
@@ -205,17 +223,17 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Escribe el contenido de tu capítulo... (Puedes usar Markdown)"
-                className="w-full h-64 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                 Puedes usar Markdown: **negrita**, # títulos, - listas
               </p>
             </div>
 
             {/* Extracto */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 <FileText className="w-4 h-4 inline mr-1" />
                 Extracto (opcional)
               </label>
@@ -223,29 +241,46 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="Un breve resumen para mostrar en la lista de capítulos..."
-                className="w-full h-20 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                className="w-full h-20 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+              />
+            </div>
+
+            {/* Fotos */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                <Image className="w-4 h-4 inline mr-1" />
+                Fotos del momento (opcional)
+              </label>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
+                Agrega fotos que acompañen este capítulo. Puedes describir cada momento.
+              </p>
+              <MediaUploader
+                items={mediaItems}
+                onChange={setMediaItems}
+                maxItems={10}
+                disabled={isSaving}
               />
             </div>
 
             {/* Configuración de desbloqueo */}
-            <Card className="p-4 bg-gray-50">
+            <Card className="p-4 bg-gray-50 dark:bg-slate-800">
               <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-5 h-5 text-gray-500" />
-                <h3 className="font-medium text-gray-900">Desbloqueo por edad</h3>
+                <Lock className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+                <h3 className="font-medium text-gray-900 dark:text-white">Desbloqueo por edad</h3>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-2">
+                  <label className="block text-sm text-gray-600 dark:text-slate-400 mb-2">
                     ¿A qué edad podrá leer este capítulo?
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <select
                       value={unlockAge || ''}
                       onChange={(e) =>
                         setUnlockAge(e.target.value ? Number(e.target.value) : undefined)
                       }
-                      className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">Siempre visible</option>
                       <option value="6">6 años</option>
@@ -262,7 +297,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                     {/* Edades sugeridas */}
                     {typeConfig?.suggestedUnlockAges && (
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-500">Sugerido:</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-400">Sugerido:</span>
                         {typeConfig.suggestedUnlockAges.map((age) => (
                           <button
                             key={age}
@@ -272,7 +307,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                               px-2 py-1 text-xs rounded-full transition-colors
                               ${unlockAge === age
                                 ? 'bg-primary-500 text-white'
-                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600'
                               }
                             `}
                           >
@@ -287,7 +322,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                 {/* Teaser para contenido bloqueado */}
                 {unlockAge && (
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">
+                    <label className="block text-sm text-gray-600 dark:text-slate-400 mb-2">
                       Mensaje mientras está bloqueado (opcional)
                     </label>
                     <Input
@@ -302,7 +337,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
 
             {/* Tags */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 <Tag className="w-4 h-4 inline mr-1" />
                 Etiquetas (opcional)
               </label>
@@ -316,7 +351,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
                   {parseTags(tagsInput).map((tag, i) => (
                     <span
                       key={i}
-                      className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                      className="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs rounded-full"
                     >
                       {tag}
                     </span>
@@ -327,7 +362,7 @@ export const ChapterForm: React.FC<ChapterFormProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-800 flex justify-end gap-3">
             <Button
               type="button"
               variant="secondary"
