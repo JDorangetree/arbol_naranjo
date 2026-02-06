@@ -4,6 +4,9 @@
  *
  * NOTA: Este generador NO incluye proyecciones futuras.
  * Solo muestra lo que se hizo, decidió y aprendió (retrospectiva).
+ *
+ * La sección educativa puede generarse con Gemini AI si está configurado.
+ * La carta de introducción puede ser escrita manualmente por el usuario.
  */
 
 import {
@@ -17,23 +20,56 @@ import { getTreeStageName, getTreeStageEmoji } from '../../utils/reportCalculati
 import { MILESTONE_CONFIG } from '../../utils/constants';
 
 /**
+ * Opciones para personalizar la generación de narrativas
+ */
+export interface NarrativeOptions {
+  /** Carta especial escrita por el usuario (reemplaza introducción automática) */
+  specialLetter?: string;
+  /** Contenido educativo cacheado de Gemini AI */
+  cachedAiEducational?: string;
+}
+
+/**
  * Genera todas las narrativas del reporte
  * NOTA: El campo 'future' ahora contiene retrospectiva, no proyecciones
+ *
+ * @param childName - Nombre del niño
+ * @param childAge - Edad del niño en el año del reporte
+ * @param year - Año del reporte
+ * @param summary - Resumen financiero del año
+ * @param treeGrowth - Datos de crecimiento del árbol
+ * @param moments - Datos de momentos especiales
+ * @param options - Opciones de personalización (carta del usuario, cache AI)
  */
-export function generateReportNarrative(
+export async function generateReportNarrative(
   childName: string,
   childAge: number,
   year: number,
   summary: YearSummary,
   treeGrowth: TreeGrowthData,
-  moments: SpecialMomentsData
-): ReportNarrative {
+  moments: SpecialMomentsData,
+  options?: NarrativeOptions
+): Promise<ReportNarrative> {
+  // Usar carta especial del usuario si existe, sino generar automáticamente
+  const introduction = options?.specialLetter
+    || generateIntroduction(childName, childAge, year, summary, treeGrowth);
+
+  // Generar contenido educativo (con Gemini si está disponible)
+  const educational = await generateEducationalContentWithAI(
+    childAge,
+    childName,
+    summary,
+    treeGrowth,
+    year,
+    options?.cachedAiEducational
+  );
+
   return {
-    introduction: generateIntroduction(childName, childAge, year, summary, treeGrowth),
+    introduction,
     growth: generateGrowthNarrative(childName, summary, treeGrowth),
     moments: generateMomentsNarrative(childName, moments),
     future: generateRetrospectiveNarrative(childName, year, summary, treeGrowth, moments),
-    educational: generateEducationalContent(childAge),
+    educational,
   };
 }
 
@@ -225,6 +261,54 @@ Al cerrar ${year}, el arbol guarda ${formatCurrency(summary.endValue, 'COP')} de
 
 /**
  * Genera contenido educativo adaptado a la edad
+ * Intenta usar Gemini AI si está configurado, sino usa contenido local
+ *
+ * @param childAge - Edad del niño
+ * @param childName - Nombre del niño
+ * @param summary - Resumen financiero del año
+ * @param treeGrowth - Datos de crecimiento del árbol
+ * @param year - Año del reporte
+ * @param cachedContent - Contenido ya generado previamente (para evitar llamadas repetidas)
+ */
+async function generateEducationalContentWithAI(
+  childAge: number,
+  childName: string,
+  summary: YearSummary,
+  treeGrowth: TreeGrowthData,
+  year: number,
+  cachedContent?: string
+): Promise<string> {
+  // Si hay contenido cacheado, usarlo directamente
+  if (cachedContent) {
+    return cachedContent;
+  }
+
+  // Intentar generar con Gemini AI
+  try {
+    const { generateEducationalWithGemini, getGeminiApiKey } = await import('../ai/gemini');
+    const apiKey = getGeminiApiKey();
+
+    if (apiKey) {
+      const result = await generateEducationalWithGemini({
+        childAge,
+        childName,
+        summary,
+        treeGrowth,
+        year,
+      }, apiKey);
+
+      return result.content;
+    }
+  } catch (error) {
+    console.warn('Error generando contenido con Gemini, usando fallback local:', error);
+  }
+
+  // Fallback: contenido hardcodeado
+  return generateEducationalContent(childAge);
+}
+
+/**
+ * Genera contenido educativo local (fallback sin IA)
  */
 function generateEducationalContent(childAge: number): string {
   if (childAge <= 5) {

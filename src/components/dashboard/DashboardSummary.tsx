@@ -46,7 +46,7 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
       value: formatCurrency(portfolio.totalInvested),
       icon: <PiggyBank className="w-8 h-8" />,
       color: 'default' as const,
-      subvalue: portfolio.investmentCount > 0 ? `${portfolio.investmentCount} decisiones registradas` : undefined,
+      subvalue: portfolio.transactionCount > 0 ? `${portfolio.transactionCount} ${portfolio.transactionCount === 1 ? 'aporte registrado' : 'aportes registrados'}` : undefined,
     },
     {
       label: 'Lo que el tiempo ha construido',

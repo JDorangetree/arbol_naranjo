@@ -5,7 +5,7 @@
  * El reporte ahora solo muestra retrospectiva (lo que se hizo/decidio/aprendio).
  */
 
-import { Transaction, AnnualReportData } from '../../types';
+import { Transaction, Investment, AnnualReportData } from '../../types';
 import {
   getAvailableYears,
   calculateYearSummary,
@@ -14,23 +14,69 @@ import {
   calculateETFBreakdown,
   calculateAgeAtYear,
 } from '../../utils/reportCalculations';
-import { generateReportNarrative } from './narrativeGenerator';
+import { calculateTreeVisualization } from '../../utils/calculations';
+import { generateReportNarrative, NarrativeOptions } from './narrativeGenerator';
+
+/**
+ * Opciones adicionales para generar el reporte
+ */
+export interface ReportOptions {
+  /** Carta especial escrita por el usuario */
+  specialLetter?: string;
+  /** Contenido educativo cacheado de Gemini AI */
+  cachedAiEducational?: string;
+}
 
 /**
  * Genera los datos completos del reporte anual
  * NOTA: Ya no incluye proyecciones futuras
+ *
+ * @param transactions - Todas las transacciones del usuario
+ * @param childName - Nombre del niño
+ * @param childBirthDate - Fecha de nacimiento del niño
+ * @param year - Año del reporte
+ * @param investments - Inversiones actuales (opcional, para valor actual preciso)
+ * @param options - Opciones adicionales (carta especial, cache AI)
  */
 export async function getAnnualReportData(
   transactions: Transaction[],
   childName: string,
   childBirthDate: Date,
-  year: number
+  year: number,
+  investments?: Investment[],
+  options?: ReportOptions
 ): Promise<AnnualReportData> {
   // Calcular resumen financiero
   const summary = calculateYearSummary(transactions, year);
 
   // Calcular crecimiento del árbol
   const treeGrowth = calculateTreeGrowth(transactions, year);
+
+  // Si es el año actual y tenemos inversiones, usar el totalInvested de las inversiones
+  // como endValue para garantizar consistencia con el Dashboard
+  const currentYear = new Date().getFullYear();
+  if (year === currentYear && investments && investments.length > 0) {
+    const totalFromInvestments = investments.reduce((sum, inv) => sum + inv.totalInvested, 0);
+    // Solo actualizar si hay diferencia significativa (más del 1%)
+    if (Math.abs(totalFromInvestments - summary.endValue) > summary.endValue * 0.01) {
+      summary.endValue = totalFromInvestments;
+      // Recalcular retorno con el valor correcto
+      summary.totalReturn = summary.endValue - summary.startValue - summary.totalContributed;
+      summary.returnPercentage = summary.startValue > 0
+        ? (summary.totalReturn / summary.startValue) * 100
+        : 0;
+
+      // Recalcular etapa final del árbol con el valor correcto
+      const buyCount = transactions.filter(t => t.type === 'buy').length;
+      const endViz = calculateTreeVisualization(totalFromInvestments, buyCount, summary.totalReturn);
+      treeGrowth.endStage = endViz.stage;
+      treeGrowth.endProgress = endViz.progress;
+      treeGrowth.leavesAtEnd = endViz.leaves;
+      treeGrowth.fruitsAtEnd = endViz.fruits;
+      treeGrowth.leavesGained = endViz.leaves - treeGrowth.leavesAtStart;
+      treeGrowth.fruitsGained = Math.max(0, endViz.fruits - treeGrowth.fruitsAtStart);
+    }
+  }
 
   // Obtener momentos especiales
   const specialMoments = getSpecialMomentsData(transactions, year);
@@ -41,14 +87,22 @@ export async function getAnnualReportData(
   // Calcular edad del niño en ese año
   const childAgeAtYear = calculateAgeAtYear(childBirthDate, year);
 
+  // Preparar opciones de narrativa
+  const narrativeOptions: NarrativeOptions = {
+    specialLetter: options?.specialLetter,
+    cachedAiEducational: options?.cachedAiEducational,
+  };
+
   // Generar narrativas (sin proyecciones - solo retrospectiva)
-  const narrative = generateReportNarrative(
+  // Ahora es async porque puede llamar a Gemini AI
+  const narrative = await generateReportNarrative(
     childName,
     childAgeAtYear,
     year,
     summary,
     treeGrowth,
-    specialMoments
+    specialMoments,
+    narrativeOptions
   );
 
   return {

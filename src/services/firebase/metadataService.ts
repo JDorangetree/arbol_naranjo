@@ -27,6 +27,8 @@ import {
   PeriodMetadataVersion,
   MilestoneType,
 } from '../../types/metadata.types';
+import { METADATA_ERRORS } from '../../utils/errorMessages';
+import { withRetry, FIREBASE_RETRY_OPTIONS } from '../../utils/retry';
 
 // ============================================
 // COLECCIONES
@@ -86,15 +88,18 @@ export async function createTransactionMetadata(
     updatedAt: new Date(),
   };
 
-  const docRef = await addDoc(ref, {
-    ...metadata,
-    versions: metadata.versions.map(v => ({
-      ...v,
-      date: Timestamp.fromDate(v.date),
-    })),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  const docRef = await withRetry(
+    () => addDoc(ref, {
+      ...metadata,
+      versions: metadata.versions.map(v => ({
+        ...v,
+        date: Timestamp.fromDate(v.date),
+      })),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     ...metadata,
@@ -111,7 +116,10 @@ export async function getTransactionMetadata(
 ): Promise<TransactionMetadata | null> {
   const ref = getTransactionMetaRef(userId);
   const q = query(ref, where('transactionId', '==', transactionId));
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (snapshot.empty) {
     return null;
@@ -137,7 +145,10 @@ export async function getAllTransactionMetadata(
     q = query(q, where('milestone', '==', options.milestone));
   }
 
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   let results = snapshot.docs.map(mapDocToTransactionMetadata);
 
@@ -168,10 +179,13 @@ export async function updateTransactionMetadata(
   editNote?: string
 ): Promise<void> {
   const ref = doc(getTransactionMetaRef(userId), metadataId);
-  const currentDoc = await getDoc(ref);
+  const currentDoc = await withRetry(
+    () => getDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!currentDoc.exists()) {
-    throw new Error('Metadata not found');
+    throw new Error(METADATA_ERRORS.NOT_FOUND);
   }
 
   const currentData = mapDocToTransactionMetadata(currentDoc);
@@ -193,15 +207,18 @@ export async function updateTransactionMetadata(
   // Agregar nueva versión al array
   const updatedVersions = [...currentData.versions, newVersionRecord];
 
-  await updateDoc(ref, {
-    ...updates,
-    versions: updatedVersions.map(v => ({
-      ...v,
-      date: Timestamp.fromDate(v.date),
-    })),
-    currentVersion: newVersion,
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(ref, {
+      ...updates,
+      versions: updatedVersions.map(v => ({
+        ...v,
+        date: Timestamp.fromDate(v.date),
+      })),
+      currentVersion: newVersion,
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -212,7 +229,10 @@ export async function getMetadataVersionHistory(
   metadataId: string
 ): Promise<MetadataVersion[]> {
   const ref = doc(getTransactionMetaRef(userId), metadataId);
-  const snapshot = await getDoc(ref);
+  const snapshot = await withRetry(
+    () => getDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!snapshot.exists()) {
     return [];
@@ -231,17 +251,20 @@ export async function restoreMetadataVersion(
   versionNumber: number
 ): Promise<void> {
   const ref = doc(getTransactionMetaRef(userId), metadataId);
-  const currentDoc = await getDoc(ref);
+  const currentDoc = await withRetry(
+    () => getDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!currentDoc.exists()) {
-    throw new Error('Metadata not found');
+    throw new Error(METADATA_ERRORS.NOT_FOUND);
   }
 
   const currentData = mapDocToTransactionMetadata(currentDoc);
   const versionToRestore = currentData.versions.find(v => v.version === versionNumber);
 
   if (!versionToRestore) {
-    throw new Error(`Version ${versionNumber} not found`);
+    throw new Error(METADATA_ERRORS.VERSION_NOT_FOUND);
   }
 
   // Crear nueva versión que es copia de la versión a restaurar
@@ -268,7 +291,10 @@ export async function deleteTransactionMetadata(
   metadataId: string
 ): Promise<void> {
   const ref = doc(getTransactionMetaRef(userId), metadataId);
-  await deleteDoc(ref);
+  await withRetry(
+    () => deleteDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 // ============================================
@@ -297,7 +323,10 @@ export async function savePeriodMetadata(
     q = query(q, where('month', '==', month));
   }
 
-  const existing = await getDocs(q);
+  const existing = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!existing.empty) {
     // Actualizar existente con versionado
@@ -313,15 +342,18 @@ export async function savePeriodMetadata(
       editNote,
     };
 
-    await updateDoc(existingDoc.ref, {
-      ...data,
-      versions: [...existingData.versions, {
-        ...newVersion,
-        date: Timestamp.fromDate(newVersion.date),
-      }],
-      currentVersion: newVersion.version,
-      updatedAt: serverTimestamp(),
-    });
+    await withRetry(
+      () => updateDoc(existingDoc.ref, {
+        ...data,
+        versions: [...existingData.versions, {
+          ...newVersion,
+          date: Timestamp.fromDate(newVersion.date),
+        }],
+        currentVersion: newVersion.version,
+        updatedAt: serverTimestamp(),
+      }),
+      FIREBASE_RETRY_OPTIONS
+    );
 
     return {
       ...existingData,
@@ -350,15 +382,18 @@ export async function savePeriodMetadata(
     updatedAt: new Date(),
   };
 
-  const docRef = await addDoc(ref, {
-    ...newPeriodMeta,
-    versions: [{
-      ...initialVersion,
-      date: Timestamp.fromDate(initialVersion.date),
-    }],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  const docRef = await withRetry(
+    () => addDoc(ref, {
+      ...newPeriodMeta,
+      versions: [{
+        ...initialVersion,
+        date: Timestamp.fromDate(initialVersion.date),
+      }],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     ...newPeriodMeta,
@@ -381,7 +416,10 @@ export async function getPeriodMetadata(
     q = query(q, where('month', '==', month));
   }
 
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (snapshot.empty) {
     return null;
@@ -395,7 +433,10 @@ export async function getPeriodMetadata(
  */
 export async function getAllPeriodMetadata(userId: string): Promise<PeriodMetadata[]> {
   const ref = getPeriodMetaRef(userId);
-  const snapshot = await getDocs(ref);
+  const snapshot = await withRetry(
+    () => getDocs(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return snapshot.docs
     .map(mapDocToPeriodMetadata)

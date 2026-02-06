@@ -9,6 +9,7 @@ import {
   RegisterData,
   LoginData,
 } from '../services/firebase';
+import { setUser, clearUser, captureError, addBreadcrumb } from '../services/logging';
 
 interface AuthState {
   user: User | null;
@@ -32,10 +33,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (data: RegisterData) => {
     set({ isLoading: true, error: null });
+    addBreadcrumb('Iniciando registro', 'auth');
     try {
       const user = await registerUser(data);
+      setUser(user.id, user.email);
+      addBreadcrumb('Registro exitoso', 'auth', { userId: user.id });
       set({ user, isLoading: false });
     } catch (error) {
+      captureError(error, { component: 'useAuthStore', action: 'register' });
       const message = error instanceof Error ? error.message : 'Error al registrar';
       set({ error: message, isLoading: false });
       throw error;
@@ -44,10 +49,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (data: LoginData) => {
     set({ isLoading: true, error: null });
+    addBreadcrumb('Iniciando login', 'auth');
     try {
       const user = await loginUser(data);
+      setUser(user.id, user.email);
+      addBreadcrumb('Login exitoso', 'auth', { userId: user.id });
       set({ user, isLoading: false });
     } catch (error) {
+      captureError(error, { component: 'useAuthStore', action: 'login' });
       const message = error instanceof Error ? error.message : 'Error al iniciar sesión';
       set({ error: message, isLoading: false });
       throw error;
@@ -56,10 +65,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     set({ isLoading: true, error: null });
+    addBreadcrumb('Iniciando logout', 'auth');
     try {
       await logoutUser();
+      clearUser();
+      addBreadcrumb('Logout exitoso', 'auth');
       set({ user: null, isLoading: false });
     } catch (error) {
+      captureError(error, { component: 'useAuthStore', action: 'logout' });
       const message = error instanceof Error ? error.message : 'Error al cerrar sesión';
       set({ error: message, isLoading: false });
       throw error;
@@ -74,12 +87,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (firebaseUser) {
         try {
           const userData = await getCurrentUserData(firebaseUser);
-          set({ user: userData, isInitialized: true, isLoading: false });
+          if (userData) {
+            setUser(userData.id, userData.email);
+            set({ user: userData, isInitialized: true, isLoading: false });
+          } else {
+            clearUser();
+            set({ user: null, isInitialized: true, isLoading: false });
+          }
         } catch (error) {
-          console.error('Error al obtener datos del usuario:', error);
+          captureError(error, { component: 'useAuthStore', action: 'initialize' });
+          clearUser();
           set({ user: null, isInitialized: true, isLoading: false });
         }
       } else {
+        clearUser();
         set({ user: null, isInitialized: true, isLoading: false });
       }
     });

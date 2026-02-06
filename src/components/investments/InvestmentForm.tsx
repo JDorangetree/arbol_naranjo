@@ -16,17 +16,25 @@ import { Button, Input } from '../common';
 import { ETFSelector } from './ETFSelector';
 import { ETF } from '../../types';
 import { formatCurrency, MILESTONE_CONFIG } from '../../utils';
-import { useMarketStore } from '../../store';
 
 const investmentSchema = z.object({
-  units: z.number().positive('Debe ser mayor a 0'),
-  pricePerUnit: z.number().positive('Debe ser mayor a 0'),
-  date: z.string().min(1, 'Selecciona una fecha'),
-  note: z.string().optional(),
-  milestone: z.string().optional(),
+  units: z.coerce.number().positive('Debe ser mayor a 0'),
+  pricePerUnit: z.coerce.number().positive('Debe ser mayor a 0'),
+  date: z.string().min(1, 'Selecciona una fecha').refine(
+    (date) => new Date(date) <= new Date(),
+    'La fecha no puede ser futura'
+  ),
+  note: z.string().default(''),
+  milestone: z.string().default(''),
 });
 
-type InvestmentFormData = z.infer<typeof investmentSchema>;
+type InvestmentFormData = {
+  units: number;
+  pricePerUnit: number;
+  date: string;
+  note: string;
+  milestone: string;
+};
 
 interface InvestmentFormProps {
   onSubmit: (data: {
@@ -38,18 +46,18 @@ interface InvestmentFormProps {
     milestone?: string;
   }) => Promise<void>;
   onCancel: () => void;
+  error?: string | null;
 }
 
 export const InvestmentForm: React.FC<InvestmentFormProps> = ({
   onSubmit,
   onCancel,
+  error,
 }) => {
   const [step, setStep] = useState(1);
   const [selectedETF, setSelectedETF] = useState<ETF | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<string>('');
-
-  const { getPriceCop } = useMarketStore();
 
   const {
     register,
@@ -57,39 +65,48 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<InvestmentFormData>({
+  } = useForm({
     resolver: zodResolver(investmentSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
       pricePerUnit: 0,
+      units: 0,
+      note: '',
+      milestone: '',
     },
   });
 
-  // Actualizar precio cuando se selecciona un ETF
+  // Debug: mostrar errores en consola
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      console.log('Form errors:', errors);
+    }
+  }, [errors]);
+
+  // NO pre-llenar el precio - el usuario debe ingresar el precio real de su compra
+  // El precio lo obtiene del documento que le entrega el broker
   useEffect(() => {
     if (selectedETF) {
-      // Obtener precio del store de mercado o usar el precio por defecto del ETF
-      const marketPrice = getPriceCop(selectedETF.id);
-      const price = marketPrice > 0 ? marketPrice : selectedETF.currentPrice;
-      setValue('pricePerUnit', price);
+      // Limpiar el precio cuando cambia el ETF para que el usuario ingrese el valor real
+      setValue('pricePerUnit', 0);
     }
-  }, [selectedETF, getPriceCop, setValue]);
+  }, [selectedETF, setValue]);
 
-  const units = watch('units') || 0;
-  const pricePerUnit = watch('pricePerUnit') || 0;
-  const total = units * pricePerUnit;
+  const unitsValue = watch('units') || 0;
+  const pricePerUnitValue = watch('pricePerUnit') || 0;
+  const total = Number(unitsValue) * Number(pricePerUnitValue);
 
-  const handleFormSubmit = async (data: InvestmentFormData) => {
+  const handleFormSubmit = async (data: Record<string, any>) => {
     if (!selectedETF) return;
 
     setIsSubmitting(true);
     try {
       await onSubmit({
         etf: selectedETF,
-        units: data.units,
-        pricePerUnit: data.pricePerUnit,
+        units: Number(data.units),
+        pricePerUnit: Number(data.pricePerUnit),
         date: new Date(data.date),
-        note: data.note,
+        note: data.note || undefined,
         milestone: selectedMilestone || undefined,
       });
     } finally {
@@ -201,7 +218,8 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 label="Precio por unidad (COP)"
                 type="number"
                 step="1"
-                placeholder="Ej: 2500000"
+                placeholder="Ingresa el precio de tu comprobante"
+                helperText="Usa el precio que aparece en el documento de tu broker"
                 error={errors.pricePerUnit?.message}
                 {...register('pricePerUnit', { valueAsNumber: true })}
               />
@@ -229,7 +247,7 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 <Button
                   type="button"
                   onClick={() => setStep(3)}
-                  disabled={!units || !pricePerUnit}
+                  disabled={!unitsValue || !pricePerUnitValue}
                   className="flex-1"
                   rightIcon={<ArrowRight className="w-5 h-5" />}
                 >
@@ -263,7 +281,9 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
               <Input
                 label="Fecha de la inversión"
                 type="date"
+                max={new Date().toISOString().split('T')[0]}
                 leftIcon={<Calendar className="w-5 h-5" />}
+                helperText="Puedes seleccionar una fecha anterior si el aporte no fue hoy"
                 error={errors.date?.message}
                 {...register('date')}
               />
@@ -344,7 +364,7 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-slate-400">Unidades:</span>
-                    <span className="font-medium text-gray-900 dark:text-white money">{units}</span>
+                    <span className="font-medium text-gray-900 dark:text-white money">{String(unitsValue)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-slate-400">Total:</span>
@@ -363,6 +383,17 @@ export const InvestmentForm: React.FC<InvestmentFormProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Error message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+                >
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </motion.div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button

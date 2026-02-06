@@ -11,28 +11,38 @@ import {
   TrendingDown,
   Plus,
   ChevronDown,
-  ChevronUp,
-  Calendar,
   DollarSign,
   PieChart,
   Clock,
   Sparkles,
+  Gift,
 } from 'lucide-react';
 import { useAuthStore, useInvestmentStore } from '../../store';
 import { useIsReadOnly } from '../../store/useAppModeStore';
-import { Card, CardHeader, Button, Modal } from '../../components/common';
+import {
+  Card,
+  CardHeader,
+  Button,
+  LoadingSpinner,
+  Modal,
+  Skeleton,
+  SkeletonInvestmentCard,
+  SkeletonStatCard,
+} from '../../components/common';
 import { InvestmentForm } from '../../components/investments';
 import { NaranjoTree } from '../../components/illustrations';
 import { formatCurrency, formatDate } from '../../utils';
 import { Investment, Transaction } from '../../types';
 import { getTransactionsByInvestment } from '../../services/firebase/investments';
+import { getFriendlyErrorMessage, INVESTMENT_ERRORS } from '../../utils/errorMessages';
 
 // Componente para mostrar una inversión expandible
 const InvestmentCard: React.FC<{
   investment: Investment;
   userId: string;
   isReadOnly: boolean;
-}> = ({ investment, userId, isReadOnly }) => {
+  onAddDividend: (investment: Investment) => void;
+}> = ({ investment, userId, isReadOnly, onAddDividend }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTx, setIsLoadingTx] = useState(false);
@@ -169,15 +179,29 @@ const InvestmentCard: React.FC<{
                 </div>
               </div>
 
+              {/* Botón para registrar dividendo */}
+              {!isReadOnly && (
+                <div className="mt-4">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Gift className="w-4 h-4" />}
+                    onClick={() => onAddDividend(investment)}
+                  >
+                    Registrar dividendo
+                  </Button>
+                </div>
+              )}
+
               {/* Historial de transacciones */}
               <div className="mt-4">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  Historial de aportes
+                  Historial de aportes y dividendos
                 </h4>
 
                 {isLoadingTx ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <LoadingSpinner size="xs" inline />
                   </div>
                 ) : transactions.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">
@@ -194,17 +218,18 @@ const InvestmentCard: React.FC<{
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             tx.type === 'buy'
                               ? 'bg-growth-100 dark:bg-growth-900/30'
-                              : 'bg-red-100 dark:bg-red-900/30'
+                              : 'bg-gold-100 dark:bg-gold-900/30'
                           }`}>
                             {tx.type === 'buy' ? (
                               <Plus className="w-4 h-4 text-growth-600 dark:text-growth-400" />
                             ) : (
-                              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                              <Gift className="w-4 h-4 text-gold-600 dark:text-gold-400" />
                             )}
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {tx.type === 'buy' ? 'Compra' : 'Venta'} • {tx.units.toFixed(4)} unidades
+                              {tx.type === 'buy' ? 'Compra' : 'Dividendo'}
+                              {tx.type === 'buy' && ` • ${tx.units.toFixed(4)} unidades`}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-slate-400">
                               {formatDate(tx.date)}
@@ -218,12 +243,16 @@ const InvestmentCard: React.FC<{
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-gray-900 dark:text-white money">
-                            {formatCurrency(tx.totalAmount)}
+                          <p className={`font-medium money ${
+                            tx.type === 'dividend' ? 'text-gold-600 dark:text-gold-400' : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {tx.type === 'dividend' ? '+' : ''}{formatCurrency(tx.totalAmount)}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-slate-400">
-                            @ {formatCurrency(tx.pricePerUnit)}
-                          </p>
+                          {tx.type === 'buy' && (
+                            <p className="text-xs text-gray-500 dark:text-slate-400">
+                              @ {formatCurrency(tx.pricePerUnit)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -245,11 +274,21 @@ export const Investments: React.FC = () => {
     investments,
     isLoading,
     loadInvestments,
+    loadTransactions,
     addInvestment,
+    addDividend,
     getPortfolioSummary,
+    getTotalDividends,
   } = useInvestmentStore();
 
   const [showInvestmentModal, setShowInvestmentModal] = useState(false);
+  const [showDividendModal, setShowDividendModal] = useState(false);
+  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  const [dividendAmount, setDividendAmount] = useState('');
+  const [dividendDate, setDividendDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dividendNote, setDividendNote] = useState('');
+  const [isSubmittingDividend, setIsSubmittingDividend] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -269,25 +308,93 @@ export const Investments: React.FC = () => {
   }) => {
     if (!user) return;
 
-    await addInvestment(
-      user.id,
-      data.etf,
-      data.units,
-      data.pricePerUnit,
-      data.date,
-      data.note,
-      data.milestone
-    );
-
-    setShowInvestmentModal(false);
+    setSubmitError(null);
+    try {
+      await addInvestment(
+        user.id,
+        data.etf,
+        data.units,
+        data.pricePerUnit,
+        data.date,
+        data.note,
+        data.milestone
+      );
+      setShowInvestmentModal(false);
+    } catch (error) {
+      const errorMessage = getFriendlyErrorMessage(error);
+      setSubmitError(errorMessage);
+      // El modal se mantiene abierto para que el usuario pueda reintentar
+    }
   };
 
+  const handleOpenDividendModal = (investment: Investment) => {
+    setSelectedInvestment(investment);
+    setDividendAmount('');
+    setDividendDate(new Date().toISOString().split('T')[0]);
+    setDividendNote('');
+    setShowDividendModal(true);
+  };
+
+  const handleAddDividend = async () => {
+    if (!user || !selectedInvestment || !dividendAmount) return;
+
+    const amount = parseFloat(dividendAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    setIsSubmittingDividend(true);
+    try {
+      await addDividend(
+        user.id,
+        selectedInvestment.id,
+        {
+          id: selectedInvestment.etfId,
+          ticker: selectedInvestment.etfTicker,
+          name: selectedInvestment.etfName,
+        },
+        amount,
+        new Date(dividendDate),
+        dividendNote || undefined
+      );
+      setShowDividendModal(false);
+      // Recargar transacciones para actualizar el historial
+      await loadTransactions(user.id);
+    } catch (error) {
+      console.error('Error al registrar dividendo:', error);
+    } finally {
+      setIsSubmittingDividend(false);
+    }
+  };
+
+  // Skeleton loading
   if (isLoading && investments.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-slate-400">Cargando inversiones...</p>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-pulse">
+          <div>
+            <Skeleton width="150px" height="32px" className="mb-2" />
+            <Skeleton width="200px" height="16px" />
+          </div>
+          <Skeleton variant="rounded" width="130px" height="40px" className="hidden sm:block" />
+        </div>
+
+        {/* Resumen skeleton */}
+        <Card className="bg-gradient-to-br from-primary-50 to-growth-50 dark:from-slate-800 dark:to-slate-700">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <Skeleton width="80px" height="12px" className="mb-2" />
+                <Skeleton width="100px" height="24px" />
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Lista skeleton */}
+        <div className="space-y-4">
+          <SkeletonInvestmentCard />
+          <SkeletonInvestmentCard />
+          <SkeletonInvestmentCard />
         </div>
       </div>
     );
@@ -316,7 +423,7 @@ export const Investments: React.FC = () => {
           <Button
             variant="primary"
             leftIcon={<Plus className="w-4 h-4" />}
-            onClick={() => setShowInvestmentModal(true)}
+            onClick={() => { setSubmitError(null); setShowInvestmentModal(true); }}
           >
             Nuevo aporte
           </Button>
@@ -366,6 +473,11 @@ export const Investments: React.FC = () => {
                 }`}>
                   {portfolio.totalReturn >= 0 ? '+' : ''}{formatCurrency(portfolio.totalReturn)}
                 </p>
+                <p className={`text-xs sm:text-sm ${
+                  portfolio.totalReturn >= 0 ? 'text-growth-500' : 'text-red-500'
+                }`}>
+                  {portfolio.totalReturn >= 0 ? '+' : ''}{portfolio.totalReturnPercentage.toFixed(2)}%
+                </p>
               </div>
 
               <div>
@@ -373,8 +485,18 @@ export const Investments: React.FC = () => {
                   <PieChart className="w-4 h-4" />
                   <span className="text-xs sm:text-sm">Diversificación</span>
                 </div>
-                <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                  {portfolio.diversificationScore}%
+                <p className={`text-lg sm:text-xl font-bold ${
+                  portfolio.diversificationScore >= 70
+                    ? 'text-growth-500'
+                    : portfolio.diversificationScore >= 40
+                    ? 'text-gold-500'
+                    : 'text-gray-500 dark:text-slate-400'
+                }`}>
+                  {portfolio.diversificationScore >= 70
+                    ? 'Alta'
+                    : portfolio.diversificationScore >= 40
+                    ? 'Media'
+                    : 'Baja'}
                 </p>
               </div>
             </div>
@@ -405,7 +527,7 @@ export const Investments: React.FC = () => {
                 variant="primary"
                 size="lg"
                 leftIcon={<Plus className="w-5 h-5" />}
-                onClick={() => setShowInvestmentModal(true)}
+                onClick={() => { setSubmitError(null); setShowInvestmentModal(true); }}
               >
                 Primer aporte
               </Button>
@@ -414,7 +536,7 @@ export const Investments: React.FC = () => {
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {investments.map((investment, index) => (
+          {portfolio.investments.map((investment, index) => (
             <motion.div
               key={investment.id}
               initial={{ opacity: 0, y: 20 }}
@@ -425,6 +547,7 @@ export const Investments: React.FC = () => {
                 investment={investment}
                 userId={user?.id || ''}
                 isReadOnly={isReadOnly}
+                onAddDividend={handleOpenDividendModal}
               />
             </motion.div>
           ))}
@@ -441,7 +564,96 @@ export const Investments: React.FC = () => {
         <InvestmentForm
           onSubmit={handleAddInvestment}
           onCancel={() => setShowInvestmentModal(false)}
+          error={submitError}
         />
+      </Modal>
+
+      {/* Modal de dividendo */}
+      <Modal
+        isOpen={showDividendModal}
+        onClose={() => setShowDividendModal(false)}
+        title="Registrar dividendo"
+        size="md"
+      >
+        <div className="space-y-4">
+          {selectedInvestment && (
+            <div className="p-3 bg-gold-50 dark:bg-gold-900/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gold-100 dark:bg-gold-900/30 flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-gold-600 dark:text-gold-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {selectedInvestment.etfTicker}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
+                    {selectedInvestment.etfName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Monto del dividendo (COP)
+            </label>
+            <input
+              type="number"
+              value={dividendAmount}
+              onChange={(e) => setDividendAmount(e.target.value)}
+              placeholder="0"
+              min="0"
+              step="100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Fecha de pago
+            </label>
+            <input
+              type="date"
+              value={dividendDate}
+              onChange={(e) => setDividendDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Nota (opcional)
+            </label>
+            <textarea
+              value={dividendNote}
+              onChange={(e) => setDividendNote(e.target.value)}
+              placeholder="Ej: Dividendo trimestral Q1 2026"
+              rows={2}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setShowDividendModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 !bg-gold-500 hover:!bg-gold-600"
+              onClick={handleAddDividend}
+              isLoading={isSubmittingDividend}
+              disabled={!dividendAmount || parseFloat(dividendAmount) <= 0}
+            >
+              Registrar
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

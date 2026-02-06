@@ -29,6 +29,22 @@ import {
   YearlyNarrativeVersion,
   UnlockStatus,
 } from '../../types/emotional.types';
+import { CHAPTER_ERRORS } from '../../utils/errorMessages';
+import { withRetry, FIREBASE_RETRY_OPTIONS } from '../../utils/retry';
+
+/**
+ * Elimina campos con valor undefined de un objeto
+ * Firestore no acepta valores undefined
+ */
+function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {
+  const result: any = {};
+  for (const key of Object.keys(obj)) {
+    if (obj[key] !== undefined) {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
 
 // ============================================
 // COLECCIONES
@@ -67,7 +83,10 @@ export async function createChapter(
   const ref = getChaptersRef(userId);
 
   // Obtener el número de capítulos para asignar sortOrder
-  const existingChapters = await getDocs(ref);
+  const existingChapters = await withRetry(
+    () => getDocs(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
   const sortOrder = existingChapters.size;
 
   // Crear versión inicial
@@ -118,7 +137,10 @@ export async function createChapter(
     docData.unlockDate = Timestamp.fromDate(data.unlockDate);
   }
 
-  const docRef = await addDoc(ref, docData);
+  const docRef = await withRetry(
+    () => addDoc(ref, docData),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     ...chapter,
@@ -135,7 +157,10 @@ export async function getChapter(
   childBirthDate?: Date
 ): Promise<Chapter | null> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  const snapshot = await getDoc(ref);
+  const snapshot = await withRetry(
+    () => getDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!snapshot.exists()) {
     return null;
@@ -170,7 +195,10 @@ export async function getChapters(
     q = query(q, where('type', '==', options.type));
   }
 
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   let chapters = snapshot.docs.map(mapDocToChapter);
 
@@ -229,10 +257,13 @@ export async function updateChapter(
   editNote?: string
 ): Promise<void> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  const currentDoc = await getDoc(ref);
+  const currentDoc = await withRetry(
+    () => getDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!currentDoc.exists()) {
-    throw new Error('Chapter not found');
+    throw new Error(CHAPTER_ERRORS.NOT_FOUND);
   }
 
   const currentData = mapDocToChapter(currentDoc);
@@ -266,7 +297,10 @@ export async function updateChapter(
     updateData.unlockDate = Timestamp.fromDate(updates.unlockDate);
   }
 
-  await updateDoc(ref, updateData);
+  await withRetry(
+    () => updateDoc(ref, updateData),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -277,10 +311,13 @@ export async function publishChapter(
   chapterId: string
 ): Promise<void> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  await updateDoc(ref, {
-    publishedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(ref, {
+      publishedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -291,7 +328,10 @@ export async function deleteChapter(
   chapterId: string
 ): Promise<void> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  await deleteDoc(ref);
+  await withRetry(
+    () => deleteDoc(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -333,6 +373,9 @@ export async function saveYearlyNarrative(
     familyContext?: string;
     yearPhotos?: string[];
     photoCaptions?: string[];
+    specialLetter?: string;
+    aiEducationalContent?: string;
+    aiEducationalGeneratedAt?: Date;
   },
   editNote?: string
 ): Promise<YearlyNarrative> {
@@ -340,7 +383,10 @@ export async function saveYearlyNarrative(
 
   // Buscar si ya existe
   const q = query(ref, where('year', '==', year));
-  const existing = await getDocs(q);
+  const existing = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!existing.empty) {
     // Actualizar existente con versionado
@@ -360,18 +406,29 @@ export async function saveYearlyNarrative(
       editNote,
     };
 
-    await updateDoc(existingDoc.ref, {
+    // Preparar datos para Firestore (convertir Date a Timestamp y eliminar undefined)
+    const updateData: any = removeUndefinedFields({
       ...data,
-      versions: [...existingData.versions.map(v => ({
+      versions: [...existingData.versions.map(v => removeUndefinedFields({
         ...v,
         date: Timestamp.fromDate(v.date),
-      })), {
+      })), removeUndefinedFields({
         ...newVersion,
         date: Timestamp.fromDate(newVersion.date),
-      }],
+      })],
       currentVersion: newVersion.version,
       updatedAt: serverTimestamp(),
     });
+
+    // Convertir aiEducationalGeneratedAt a Timestamp si existe
+    if (data.aiEducationalGeneratedAt) {
+      updateData.aiEducationalGeneratedAt = Timestamp.fromDate(data.aiEducationalGeneratedAt);
+    }
+
+    await withRetry(
+      () => updateDoc(existingDoc.ref, updateData),
+      FIREBASE_RETRY_OPTIONS
+    );
 
     return {
       ...existingData,
@@ -405,15 +462,26 @@ export async function saveYearlyNarrative(
     updatedAt: new Date(),
   };
 
-  const docRef = await addDoc(ref, {
+  // Preparar datos para Firestore (convertir Dates a Timestamps y eliminar undefined)
+  const firestoreData: any = removeUndefinedFields({
     ...narrative,
-    versions: [{
+    versions: [removeUndefinedFields({
       ...initialVersion,
       date: Timestamp.fromDate(initialVersion.date),
-    }],
+    })],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // Convertir aiEducationalGeneratedAt a Timestamp si existe
+  if (data.aiEducationalGeneratedAt) {
+    firestoreData.aiEducationalGeneratedAt = Timestamp.fromDate(data.aiEducationalGeneratedAt);
+  }
+
+  const docRef = await withRetry(
+    () => addDoc(ref, firestoreData),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     ...narrative,
@@ -430,7 +498,10 @@ export async function getYearlyNarrative(
 ): Promise<YearlyNarrative | null> {
   const ref = getYearlyNarrativesRef(userId);
   const q = query(ref, where('year', '==', year));
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (snapshot.empty) {
     return null;
@@ -446,7 +517,10 @@ export async function getAllYearlyNarratives(
   userId: string
 ): Promise<YearlyNarrative[]> {
   const ref = getYearlyNarrativesRef(userId);
-  const snapshot = await getDocs(ref);
+  const snapshot = await withRetry(
+    () => getDocs(ref),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return snapshot.docs
     .map(mapDocToYearlyNarrative)
@@ -555,10 +629,13 @@ export async function linkChapterToTransactions(
   transactionIds: string[]
 ): Promise<void> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  await updateDoc(ref, {
-    linkedTransactionIds: transactionIds,
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(ref, {
+      linkedTransactionIds: transactionIds,
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -570,10 +647,13 @@ export async function linkChapterToYears(
   years: number[]
 ): Promise<void> {
   const ref = doc(getChaptersRef(userId), chapterId);
-  await updateDoc(ref, {
-    linkedYears: years,
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(ref, {
+      linkedYears: years,
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 /**
@@ -642,6 +722,10 @@ function mapDocToYearlyNarrative(doc: any): YearlyNarrative {
     familyContext: data.familyContext,
     yearPhotos: data.yearPhotos || [],
     photoCaptions: data.photoCaptions || [],
+    // Campos para carta especial y contenido AI
+    specialLetter: data.specialLetter,
+    aiEducationalContent: data.aiEducationalContent,
+    aiEducationalGeneratedAt: data.aiEducationalGeneratedAt?.toDate(),
     versions: (data.versions || []).map((v: any) => ({
       ...v,
       date: v.date?.toDate() || new Date(),

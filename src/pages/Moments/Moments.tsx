@@ -15,7 +15,7 @@ import { useAuthStore } from '../../store';
 import { getTransactions } from '../../services/firebase/investments';
 import { Transaction } from '../../types';
 import { formatCurrency, MILESTONE_CONFIG } from '../../utils';
-import { Card } from '../../components/common';
+import { Card, LoadingSpinner } from '../../components/common';
 
 export const Moments: React.FC = () => {
   const { user } = useAuthStore();
@@ -62,11 +62,7 @@ export const Moments: React.FC = () => {
   const totalInMoments = filteredMoments.reduce((sum, m) => sum + m.totalAmount, 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingSpinner message="Cargando momentos..." className="py-12 min-h-0" />;
   }
 
   return (

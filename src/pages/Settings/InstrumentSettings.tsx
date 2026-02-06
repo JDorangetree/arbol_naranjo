@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Settings,
@@ -17,6 +17,11 @@ import {
   Save,
   CheckCircle,
   ExternalLink,
+  RefreshCw,
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  Clock,
 } from 'lucide-react';
 import { useInstrumentStore, useMarketStore } from '../../store';
 import {
@@ -29,7 +34,7 @@ import {
   InstrumentCategory,
   InstrumentType,
 } from '../../utils/instruments';
-import { isAvailableInFinnhub } from '../../services/marketData/finnhub';
+import { isAvailableInFinnhub, getQuote } from '../../services/marketData/finnhub';
 import { formatCurrency } from '../../utils/formatters';
 import { Card, Button } from '../../components/common';
 
@@ -41,7 +46,7 @@ export const InstrumentSettings: React.FC = () => {
     resetToDefaults,
   } = useInstrumentStore();
 
-  const { apiKey, setApiKey } = useMarketStore();
+  const { apiKey, setApiKey, fetchPricesForInstruments, isLoading: isPricesLoading } = useMarketStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<InstrumentType | 'all'>('all');
@@ -96,6 +101,17 @@ export const InstrumentSettings: React.FC = () => {
           <span className="text-sm text-gray-500 dark:text-slate-400">
             {selectedInstrumentIds.length} seleccionados
           </span>
+          {apiKey && (
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<RefreshCw className={`w-4 h-4 ${isPricesLoading ? 'animate-spin' : ''}`} />}
+              onClick={() => fetchPricesForInstruments(selectedInstrumentIds)}
+              disabled={isPricesLoading || selectedInstrumentIds.length === 0}
+            >
+              {isPricesLoading ? 'Actualizando...' : 'Actualizar precios'}
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -256,6 +272,15 @@ export const InstrumentSettings: React.FC = () => {
   );
 };
 
+// Estado de verificación de API
+type ApiTestStatus = 'idle' | 'testing' | 'success' | 'error';
+
+interface ApiTestResult {
+  status: ApiTestStatus;
+  message: string;
+  price?: number;
+}
+
 // Componente para configuración de API key
 interface ApiKeySectionProps {
   apiKey: string | null;
@@ -266,13 +291,62 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({ apiKey, setApiKey }) => {
   const [inputKey, setInputKey] = useState(apiKey || '');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [testResult, setTestResult] = useState<ApiTestResult>({ status: 'idle', message: '' });
 
   const handleSave = () => {
     const trimmedKey = inputKey.trim();
     setApiKey(trimmedKey || null);
     setSaved(true);
+    setTestResult({ status: 'idle', message: '' }); // Reset test status
     setTimeout(() => setSaved(false), 3000);
   };
+
+  // Función para probar la API
+  const testApiConnection = useCallback(async () => {
+    const keyToTest = inputKey.trim() || apiKey;
+
+    if (!keyToTest) {
+      setTestResult({
+        status: 'error',
+        message: 'Ingresa una API key para probar'
+      });
+      return;
+    }
+
+    setTestResult({ status: 'testing', message: 'Probando conexión...' });
+
+    try {
+      // Probar con SPY y NU en paralelo
+      const [spyQuote, nuQuote] = await Promise.all([
+        getQuote('SPY', keyToTest),
+        getQuote('NU', keyToTest)
+      ]);
+
+      if (spyQuote && spyQuote.price > 0) {
+        let message = `SPY: $${spyQuote.price.toFixed(2)} USD`;
+        if (nuQuote && nuQuote.price > 0) {
+          message += ` | NU: $${nuQuote.price.toFixed(2)} USD`;
+        } else {
+          message += ' | NU: no disponible';
+        }
+        setTestResult({
+          status: 'success',
+          message: `✓ ${message}`,
+          price: spyQuote.price
+        });
+      } else {
+        setTestResult({
+          status: 'error',
+          message: 'No se pudo obtener precio. Verifica tu API key.'
+        });
+      }
+    } catch (error) {
+      setTestResult({
+        status: 'error',
+        message: 'Error de conexión. Verifica tu API key.'
+      });
+    }
+  }, [inputKey, apiKey]);
 
   return (
     <Card className="p-6">
@@ -316,6 +390,46 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({ apiKey, setApiKey }) => {
               </Button>
             </div>
 
+            {/* Botón de prueba y estado */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={testApiConnection}
+                variant="secondary"
+                size="sm"
+                disabled={testResult.status === 'testing'}
+                leftIcon={
+                  testResult.status === 'testing'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <Wifi className="w-4 h-4" />
+                }
+              >
+                {testResult.status === 'testing' ? 'Probando...' : 'Probar conexión'}
+              </Button>
+
+              {/* Indicador de estado */}
+              <AnimatePresence mode="wait">
+                {testResult.status !== 'idle' && testResult.status !== 'testing' && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${
+                      testResult.status === 'success'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                    }`}
+                  >
+                    {testResult.status === 'success' ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4" />
+                    )}
+                    <span>{testResult.message}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="flex items-center gap-4 text-sm">
               <a
                 href="https://finnhub.io/register"
@@ -327,8 +441,18 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({ apiKey, setApiKey }) => {
                 Obtener API key gratis
               </a>
               <span className="text-gray-400 dark:text-slate-600">|</span>
-              <span className="text-gray-500 dark:text-slate-400">
-                {apiKey ? '✓ API key configurada' : 'Sin API key (precios estáticos)'}
+              <span className={`flex items-center gap-1 ${apiKey ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-slate-400'}`}>
+                {apiKey ? (
+                  <>
+                    <Wifi className="w-3 h-3" />
+                    API key configurada
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-3 h-3" />
+                    Sin API key (precios estáticos)
+                  </>
+                )}
               </span>
             </div>
 
@@ -364,6 +488,34 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, icon, isActive, onClick 
   </button>
 );
 
+// Formatea la hora de actualización de forma corta
+const formatUpdateTime = (date: Date | null): string => {
+  if (!date) return '';
+  const d = new Date(date);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+
+  const timeStr = d.toLocaleTimeString('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (isToday) {
+    return `Hoy ${timeStr}`;
+  }
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) {
+    return `Ayer ${timeStr}`;
+  }
+
+  return d.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+  });
+};
+
 // Componente para tarjeta de instrumento
 interface InstrumentCardProps {
   instrument: Instrument;
@@ -376,7 +528,14 @@ const InstrumentCard: React.FC<InstrumentCardProps> = ({
   isSelected,
   onToggle,
 }) => {
+  const { getPrice, getPriceCop } = useMarketStore();
   const hasApiSupport = isAvailableInFinnhub(instrument.id);
+
+  // Obtener precio actualizado del store o usar el estático
+  const priceData = getPrice(instrument.id);
+  const currentPrice = priceData?.priceCop || getPriceCop(instrument.id) || instrument.currentPriceCop;
+  const isFromApi = priceData?.source === 'api';
+  const lastUpdateTime = priceData?.lastUpdated ? formatUpdateTime(priceData.lastUpdated) : null;
 
   return (
     <motion.div
@@ -421,10 +580,27 @@ const InstrumentCard: React.FC<InstrumentCardProps> = ({
       {/* Precio */}
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
         <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-500 dark:text-slate-400">Precio aprox.</span>
-          <span className="font-semibold text-gray-900 dark:text-white money">
-            {formatCurrency(instrument.currentPriceCop, 'COP')}
-          </span>
+          <div>
+            <span className="text-xs text-gray-500 dark:text-slate-400">
+              {isFromApi ? 'Precio actual' : 'Precio aprox.'}
+            </span>
+            {lastUpdateTime && (
+              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                <Clock className="w-3 h-3" />
+                <span>{lastUpdateTime}</span>
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <span className="font-semibold text-gray-900 dark:text-white money">
+              {formatCurrency(currentPrice, 'COP')}
+            </span>
+            {priceData?.priceUsd && (
+              <span className="block text-xs text-gray-400 dark:text-slate-500">
+                ${priceData.priceUsd.toFixed(2)} USD
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
           {instrument.isAvailableInMGC && (
@@ -433,8 +609,12 @@ const InstrumentCard: React.FC<InstrumentCardProps> = ({
             </span>
           )}
           {hasApiSupport ? (
-            <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full">
-              Precio automático
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              isFromApi
+                ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+            }`}>
+              {isFromApi ? '✓ Actualizado' : 'Precio automático'}
             </span>
           ) : (
             <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded-full">

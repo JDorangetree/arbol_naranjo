@@ -1,20 +1,38 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getAllPrices, ETFPrice, formatLastUpdated } from '../services/marketData/priceService';
+import { getUsdCopRate } from '../services/marketData/finnhub';
 import { AVAILABLE_ETFS, USD_TO_COP } from '../utils/constants';
 import { useInvestmentStore } from './useInvestmentStore';
 import { ALL_INSTRUMENTS } from '../utils/instruments';
 
-// Verifica si la última actualización fue hoy
-const isUpdatedToday = (lastUpdated: Date | null): boolean => {
+// Hora de actualización automática (6:00 AM hora local)
+const AUTO_UPDATE_HOUR = 6;
+
+// Verifica si la última actualización fue después de la hora de actualización de hoy
+const isUpdatedAfterTodayUpdateTime = (lastUpdated: Date | null): boolean => {
   if (!lastUpdated) return false;
-  const today = new Date();
+
+  const now = new Date();
   const updated = new Date(lastUpdated);
-  return (
-    today.getFullYear() === updated.getFullYear() &&
-    today.getMonth() === updated.getMonth() &&
-    today.getDate() === updated.getDate()
+
+  // Crear la fecha de hoy a las 6:00 AM
+  const todayUpdateTime = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    AUTO_UPDATE_HOUR,
+    0,
+    0
   );
+
+  // Si aún no son las 6:00 AM de hoy, usar las 6:00 AM de ayer
+  if (now < todayUpdateTime) {
+    todayUpdateTime.setDate(todayUpdateTime.getDate() - 1);
+  }
+
+  // La actualización es válida si ocurrió después de la hora de actualización
+  return updated >= todayUpdateTime;
 };
 
 interface MarketState {
@@ -33,7 +51,9 @@ interface MarketState {
   // Acciones
   setApiKey: (key: string | null) => void;
   fetchPricesForInvestments: () => Promise<void>;
+  fetchPricesForInstruments: (instrumentIds: string[]) => Promise<void>;
   fetchPricesIfNeeded: () => Promise<void>;
+  refreshExchangeRate: () => Promise<void>;
   updateManualPrice: (etfId: string, price: number) => void;
   getPrice: (etfId: string) => ETFPrice | null;
   getPriceCop: (etfId: string) => number;
@@ -92,6 +112,71 @@ export const useMarketStore = create<MarketState>()(
         }
       },
 
+      // Obtener precios para instrumentos específicos (usado en configuración)
+      fetchPricesForInstruments: async (instrumentIds: string[]) => {
+        const { apiKey, exchangeRate, prices } = get();
+
+        if (!apiKey) {
+          set({ errors: ['Se requiere API key para actualizar precios'] });
+          return;
+        }
+
+        if (instrumentIds.length === 0) {
+          set({ isLoading: false, errors: [] });
+          return;
+        }
+
+        set({ isLoading: true, errors: [] });
+
+        try {
+          const result = await getAllPrices(instrumentIds, apiKey, exchangeRate);
+
+          // Merge con precios existentes
+          set({
+            prices: { ...prices, ...result.prices },
+            exchangeRate: result.exchangeRate,
+            lastUpdated: result.lastUpdated,
+            errors: result.errors,
+            isLoading: false,
+          });
+        } catch (error) {
+          set({
+            errors: ['Error al obtener precios del mercado'],
+            isLoading: false,
+          });
+        }
+      },
+
+      // Actualizar solo la tasa de cambio USD/COP
+      // Usa APIs gratuitas (Frankfurter, exchangerate.host) - no requiere API key
+      // Nota: Finnhub NO soporta USD/COP
+      refreshExchangeRate: async () => {
+        set({ isLoading: true, errors: [] });
+
+        try {
+          const newRate = await getUsdCopRate();
+
+          if (newRate) {
+            set({
+              exchangeRate: newRate,
+              lastUpdated: new Date(),
+              isLoading: false,
+              errors: [],
+            });
+          } else {
+            set({
+              errors: ['No se pudo obtener la tasa de cambio'],
+              isLoading: false,
+            });
+          }
+        } catch (error) {
+          set({
+            errors: ['Error al obtener la tasa de cambio'],
+            isLoading: false,
+          });
+        }
+      },
+
       // Actualizar precio manual
       updateManualPrice: (etfId, price) => {
         const { prices } = get();
@@ -144,11 +229,11 @@ export const useMarketStore = create<MarketState>()(
         return formatLastUpdated(new Date(lastUpdated));
       },
 
-      // Verifica si necesita actualización (no se ha actualizado hoy)
+      // Verifica si necesita actualización (después de las 6:00 AM)
       needsUpdate: () => {
         const { lastUpdated, apiKey } = get();
         if (!apiKey) return false; // Sin API key no puede actualizar
-        return !isUpdatedToday(lastUpdated);
+        return !isUpdatedAfterTodayUpdateTime(lastUpdated);
       },
 
       // Actualiza precios solo si no se han actualizado hoy

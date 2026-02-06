@@ -14,11 +14,15 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAnnualReport } from '../../hooks/useAnnualReport';
-import { Card, Button } from '../../components/common';
+import { useAuthStore, useInvestmentStore } from '../../store';
+import { Card, Button, LoadingSpinner } from '../../components/common';
 import { YearSelector } from './components/YearSelector';
 import { ReportPreview } from './components/ReportPreview';
+import { SpecialLetterEditor } from '../../components/reports/SpecialLetterEditor';
 
 export const AnnualReport: React.FC = () => {
+  const { user } = useAuthStore();
+  const { loadInvestments, loadTransactions } = useInvestmentStore();
   const {
     availableYears,
     selectedYear,
@@ -30,14 +34,31 @@ export const AnnualReport: React.FC = () => {
     generateReport,
     downloadPDF,
     clearError,
+    // Carta especial
+    specialLetter,
+    isLoadingLetter,
+    saveSpecialLetter,
   } = useAnnualReport();
 
-  // Generar reporte cuando cambia el año seleccionado
+  const childName = user?.childName || 'Tu Hijo';
+
+  // Cargar datos al montar el componente
   useEffect(() => {
+    if (user) {
+      console.log('[AnnualReport] Cargando datos para usuario:', user.id);
+      loadInvestments(user.id);
+      loadTransactions(user.id);
+    }
+  }, [user, loadInvestments, loadTransactions]);
+
+  // Generar reporte cuando cambia el año seleccionado o cuando las transacciones se cargan
+  useEffect(() => {
+    console.log('[AnnualReport] Effect disparado:', { selectedYear, availableYearsLength: availableYears.length, availableYears });
+    // Solo generar si hay años disponibles que vengan de transacciones reales (no solo el año actual por defecto)
     if (selectedYear && availableYears.length > 0) {
       generateReport();
     }
-  }, [selectedYear]);
+  }, [selectedYear, availableYears, generateReport]);
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
@@ -152,13 +173,30 @@ export const AnnualReport: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-12"
+          className="py-12"
         >
-          <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-slate-400">Generando el libro del tesoro...</p>
-          <p className="text-sm text-gray-400 dark:text-slate-500 mt-2">
+          <LoadingSpinner size="lg" message="Generando el libro del tesoro..." className="min-h-0" />
+          <p className="text-sm text-gray-400 dark:text-slate-500 mt-2 text-center">
             Esto puede tomar unos segundos
           </p>
+        </motion.div>
+      )}
+
+      {/* Editor de carta especial */}
+      {!isLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-8"
+        >
+          <SpecialLetterEditor
+            initialValue={specialLetter}
+            childName={childName}
+            year={selectedYear}
+            onSave={saveSpecialLetter}
+            disabled={isLoadingLetter || isGeneratingPdf}
+          />
         </motion.div>
       )}
 
@@ -198,7 +236,7 @@ export const AnnualReport: React.FC = () => {
             </Button>
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-3">
-              El PDF incluye {8} páginas con toda la historia del año
+              El PDF incluye 7 páginas con toda la historia del año
             </p>
           </motion.div>
         </motion.div>

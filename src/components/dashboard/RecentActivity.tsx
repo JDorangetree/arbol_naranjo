@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowDownCircle,
-  ArrowUpCircle,
   Gift,
   Sparkles,
 } from 'lucide-react';
@@ -66,23 +65,11 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
       bgColor: 'bg-growth-100',
       label: 'Compra',
     },
-    sell: {
-      icon: ArrowUpCircle,
-      color: 'text-red-500',
-      bgColor: 'bg-red-100',
-      label: 'Venta',
-    },
     dividend: {
       icon: Gift,
       color: 'text-gold-500',
       bgColor: 'bg-gold-100',
       label: 'Dividendo',
-    },
-    split: {
-      icon: Sparkles,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-100',
-      label: 'Split',
     },
   };
 
@@ -114,22 +101,22 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
           )}
         </div>
         <p className="text-sm text-gray-500">
-          {config.label} · {formatRelativeDate(transaction.date)}
+          {config.label} · {formatRelativeDate(transaction.createdAt)}
         </p>
       </div>
 
       {/* Monto */}
       <div className="text-right">
         <p className={`font-semibold money ${
-          transaction.type === 'buy' ? 'text-growth-600' :
-          transaction.type === 'sell' ? 'text-red-600' : 'text-gold-600'
+          transaction.type === 'buy' ? 'text-growth-600' : 'text-gold-600'
         }`}>
-          {transaction.type === 'sell' ? '-' : '+'}
-          {formatCurrency(transaction.totalAmount)}
+          +{formatCurrency(transaction.totalAmount)}
         </p>
-        <p className="text-xs text-gray-400">
-          {transaction.units} unidades
-        </p>
+        {transaction.type === 'buy' && (
+          <p className="text-xs text-gray-400">
+            {transaction.units} unidades
+          </p>
+        )}
       </div>
     </motion.div>
   );

@@ -3,9 +3,19 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useAuthStore, useInvestmentStore, useMarketStore } from '../../store';
 import { useIsReadOnly } from '../../store/useAppModeStore';
-import { DashboardSummary, RecentActivity } from '../../components/dashboard';
+import { DashboardSummary, RecentActivity, ExchangeRateCard } from '../../components/dashboard';
 import { InvestmentList, InvestmentForm } from '../../components/investments';
-import { Button, Card, CardHeader, Modal } from '../../components/common';
+import {
+  Button,
+  Card,
+  CardHeader,
+  Modal,
+  Skeleton,
+  SkeletonDashboardSummary,
+  SkeletonNaranjoEvolutivo,
+  SkeletonInvestmentList,
+  SkeletonRecentActivity,
+} from '../../components/common';
 import { NaranjoTree, NaranjoEvolutivo } from '../../components/illustrations';
 
 export const Dashboard: React.FC = () => {
@@ -26,7 +36,7 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadInvestments(user.id);
-      loadTransactions(user.id, 10);
+      loadTransactions(user.id); // Cargar todas para conteo correcto
     }
   }, [user, loadInvestments, loadTransactions]);
 
@@ -49,25 +59,56 @@ export const Dashboard: React.FC = () => {
   }) => {
     if (!user) return;
 
-    await addInvestment(
-      user.id,
-      data.etf,
-      data.units,
-      data.pricePerUnit,
-      data.date,
-      data.note,
-      data.milestone
-    );
-
-    setShowInvestmentModal(false);
+    try {
+      await addInvestment(
+        user.id,
+        data.etf,
+        data.units,
+        data.pricePerUnit,
+        data.date,
+        data.note,
+        data.milestone
+      );
+      setShowInvestmentModal(false);
+    } catch (error) {
+      console.error('Error al registrar inversión:', error);
+      // El modal se mantiene abierto para que el usuario pueda reintentar
+    }
   };
 
+  // Skeleton loading - muestra la estructura mientras carga
   if (isLoading && investments.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-slate-400">Cargando tu portafolio...</p>
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+        {/* Header skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 animate-pulse">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Skeleton variant="rounded" width="64px" height="64px" />
+            <div>
+              <Skeleton width="200px" height="28px" className="mb-2" />
+              <Skeleton width="280px" height="16px" />
+            </div>
+          </div>
+          <Skeleton variant="rounded" width="140px" height="40px" className="hidden sm:block" />
+        </div>
+
+        {/* Naranjo Evolutivo skeleton */}
+        <SkeletonNaranjoEvolutivo />
+
+        {/* Stats skeleton */}
+        <SkeletonDashboardSummary />
+
+        {/* Grid skeleton */}
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card>
+            <div className="p-4 border-b border-gray-100 dark:border-slate-700">
+              <Skeleton width="120px" height="18px" />
+            </div>
+            <div className="p-4">
+              <SkeletonInvestmentList count={2} />
+            </div>
+          </Card>
+          <SkeletonRecentActivity count={4} />
         </div>
       </div>
     );
@@ -126,6 +167,9 @@ export const Dashboard: React.FC = () => {
 
       {/* Resumen de estadísticas */}
       <DashboardSummary portfolio={portfolio} />
+
+      {/* Tasa de cambio USD/COP */}
+      {!isReadOnly && <ExchangeRateCard />}
 
       {/* Grid de contenido */}
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">

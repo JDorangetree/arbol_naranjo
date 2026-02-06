@@ -163,17 +163,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data }) => {
             </div>
 
             {/* Sección 7 */}
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <span className="text-2xl">🔮</span>
-              <div>
-                <p className="font-medium text-gray-900">Proyecciones</p>
-                <p className="text-xs text-gray-500">
-                  El futuro del tesoro de {data.childName}
-                </p>
-              </div>
-            </div>
-
-            {/* Sección 8 */}
             <div className="flex items-start gap-3 p-3 bg-gold-50 rounded-lg border border-gold-200">
               <span className="text-2xl">💝</span>
               <div>

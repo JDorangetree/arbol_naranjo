@@ -64,7 +64,7 @@ export interface Transaction {
   createdAt: Date;
 }
 
-export type TransactionType = 'buy' | 'sell' | 'dividend' | 'split';
+export type TransactionType = 'buy' | 'dividend';
 
 export type MilestoneType =
   | 'first_investment'
@@ -105,6 +105,7 @@ export interface PortfolioSummary {
   monthlyContribution: number;
   lastContributionDate: Date | null;
   investmentCount: number;
+  transactionCount: number;
   diversificationScore: number;
   investments: Investment[];
   recentTransactions: Transaction[];

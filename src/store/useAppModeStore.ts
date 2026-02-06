@@ -8,6 +8,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AppMode, AppModeState } from '../types/app.types';
+import {
+  hashPin,
+  verifyPin as verifyCryptoPin,
+  serializeHashedPin,
+  deserializeHashedPin,
+  isLegacyFormat,
+  migrateLegacyPin,
+  HashedPin,
+} from '../services/crypto';
 
 interface AppModeStoreState extends AppModeState {
   // Estado adicional
@@ -100,22 +109,41 @@ export const useAppModeStore = create<AppModeStoreState>()(
 
       // Establecer PIN para modo hijo
       setChildModePin: (pin: string) => {
-        // El PIN se almacena encriptado en el store persistido
-        // En producción, usar una librería de encriptación
-        localStorage.setItem('childModePin', btoa(pin));
+        // Hashear el PIN de forma segura antes de almacenar
+        const hashedPin = hashPin(pin);
+        localStorage.setItem('childModePin', serializeHashedPin(hashedPin));
       },
 
       // Verificar PIN
       verifyPin: (pin: string) => {
         const storedPin = localStorage.getItem('childModePin');
+
+        // Si no hay PIN almacenado, usar el default
         if (!storedPin) {
           return pin === DEFAULT_PIN;
         }
-        try {
-          return atob(storedPin) === pin;
-        } catch {
+
+        // Verificar si es formato legacy (base64 simple)
+        if (isLegacyFormat(storedPin)) {
+          // Migrar automáticamente al nuevo formato
+          const migratedPin = migrateLegacyPin(storedPin);
+          if (migratedPin) {
+            // Guardar en nuevo formato
+            localStorage.setItem('childModePin', serializeHashedPin(migratedPin));
+            // Verificar con el nuevo formato
+            return verifyCryptoPin(pin, migratedPin);
+          }
+          // Si la migración falla, usar default
           return pin === DEFAULT_PIN;
         }
+
+        // Formato nuevo: deserializar y verificar
+        const hashedPin = deserializeHashedPin(storedPin);
+        if (!hashedPin) {
+          return pin === DEFAULT_PIN;
+        }
+
+        return verifyCryptoPin(pin, hashedPin);
       },
 
       // Desbloquear modo hijo (para volver a modo padre)

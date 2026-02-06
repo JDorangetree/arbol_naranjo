@@ -13,7 +13,6 @@ import { PDFTreeGrowth } from './PDFTreeGrowth';
 import { PDFMomentsTimeline } from './PDFMomentsTimeline';
 import { PDFBreakdown } from './PDFBreakdown';
 import { PDFEducational } from './PDFEducational';
-import { PDFFuture } from './PDFFuture';
 
 interface AnnualReportPDFProps {
   data: AnnualReportData;
@@ -46,9 +45,6 @@ export const AnnualReportPDF: React.FC<AnnualReportPDFProps> = ({ data }) => {
 
       {/* 7. Seccion educativa */}
       <PDFEducational data={data} />
-
-      {/* 8. Proyecciones futuras */}
-      <PDFFuture data={data} />
     </Document>
   );
 };

@@ -5,6 +5,7 @@
  */
 
 import { getInstrumentById } from '../../utils/instruments';
+import { withRetry, API_RETRY_OPTIONS } from '../../utils/retry';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 
@@ -69,16 +70,20 @@ export async function getQuote(
   try {
     const url = `${FINNHUB_BASE_URL}/quote?symbol=${symbol}&token=${apiKey}`;
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn('Finnhub rate limit alcanzado');
-        return null;
-      }
-      console.error('Error en respuesta Finnhub:', response.status);
-      return null;
-    }
+    const response = await withRetry(
+      async () => {
+        const res = await fetch(url);
+        // Si es rate limit, lanzar error para que se reintente
+        if (res.status === 429) {
+          throw new Error('Rate limit exceeded');
+        }
+        if (!res.ok) {
+          throw new Error(`HTTP error: ${res.status}`);
+        }
+        return res;
+      },
+      API_RETRY_OPTIONS
+    );
 
     const data: FinnhubQuote = await response.json();
 
@@ -131,32 +136,36 @@ export async function getMultipleQuotes(
 }
 
 /**
- * Obtiene la tasa de cambio USD/COP desde Finnhub
+ * Obtiene la tasa de cambio USD/COP desde APIs gratuitas
+ * Finnhub NO soporta USD/COP, por eso usamos alternativas gratuitas:
+ * 1. Open Exchange Rates API (gratis, sin API key, soporta COP)
+ *
+ * No requiere API key
  */
-export async function getUsdCopRate(apiKey: string): Promise<number | null> {
+export async function getUsdCopRate(): Promise<number | null> {
+  // Usar Open Exchange Rates API (gratis, sin API key, soporta COP)
   try {
-    // Finnhub usa el endpoint de forex
-    const url = `${FINNHUB_BASE_URL}/forex/rates?base=USD&token=${apiKey}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.warn('Error obteniendo tasa de cambio de Finnhub');
-      return null;
-    }
+    const url = 'https://open.er-api.com/v6/latest/USD';
+    const response = await withRetry(
+      async () => {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`HTTP error: ${res.status}`);
+        }
+        return res;
+      },
+      API_RETRY_OPTIONS
+    );
 
     const data = await response.json();
-
-    // Finnhub retorna las tasas en data.quote
-    if (data.quote && data.quote.COP) {
-      return data.quote.COP;
+    if (data.result === 'success' && data.rates && data.rates.COP) {
+      return data.rates.COP;
     }
-
-    return null;
   } catch (error) {
-    console.error('Error obteniendo tasa USD/COP de Finnhub:', error);
-    return null;
+    console.error('Error obteniendo tasa USD/COP:', error);
   }
+
+  return null;
 }
 
 /**

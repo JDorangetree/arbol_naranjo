@@ -14,6 +14,7 @@ import {
   calculateDiversificationScore,
 } from '../utils';
 import { useMarketStore } from './useMarketStore';
+import { captureError, addBreadcrumb } from '../services/logging';
 
 interface InvestmentState {
   investments: Investment[];
@@ -33,11 +34,20 @@ interface InvestmentState {
     note?: string,
     milestone?: string
   ) => Promise<void>;
+  addDividend: (
+    userId: string,
+    investmentId: string,
+    etf: { id: string; ticker: string; name: string },
+    amount: number,
+    date: Date,
+    note?: string
+  ) => Promise<void>;
   clearError: () => void;
   reset: () => void;
 
   // Selectores computados
   getPortfolioSummary: () => PortfolioSummary;
+  getTotalDividends: () => number;
 }
 
 const initialState = {
@@ -56,6 +66,7 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
       const investments = await getInvestments(userId);
       set({ investments, isLoading: false });
     } catch (error) {
+      captureError(error, { component: 'useInvestmentStore', action: 'loadInvestments' });
       const message = error instanceof Error ? error.message : 'Error al cargar inversiones';
       set({ error: message, isLoading: false });
     }
@@ -66,7 +77,7 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
       const transactions = await getTransactions(userId, limit);
       set({ transactions });
     } catch (error) {
-      console.error('Error al cargar transacciones:', error);
+      captureError(error, { component: 'useInvestmentStore', action: 'loadTransactions' });
     }
   },
 
@@ -114,11 +125,52 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
 
       // Recargar datos
       await get().loadInvestments(userId);
-      await get().loadTransactions(userId, 10);
+      await get().loadTransactions(userId);
 
+      addBreadcrumb('Inversión agregada', 'investment', { etfId: etf.id, units });
       set({ isLoading: false });
     } catch (error) {
+      captureError(error, { component: 'useInvestmentStore', action: 'addInvestment', etfId: etf.id });
       const message = error instanceof Error ? error.message : 'Error al agregar inversión';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  addDividend: async (
+    userId: string,
+    investmentId: string,
+    etf: { id: string; ticker: string; name: string },
+    amount: number,
+    date: Date,
+    note?: string
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Crear la transacción de dividendo
+      await createTransaction({
+        userId,
+        investmentId,
+        etfId: etf.id,
+        etfTicker: etf.ticker,
+        etfName: etf.name,
+        type: 'dividend',
+        units: 0, // Los dividendos no agregan unidades
+        pricePerUnit: 0,
+        totalAmount: amount,
+        commission: 0,
+        date,
+        note,
+      });
+
+      // Recargar transacciones
+      await get().loadTransactions(userId);
+
+      addBreadcrumb('Dividendo registrado', 'investment', { etfId: etf.id, amount });
+      set({ isLoading: false });
+    } catch (error) {
+      captureError(error, { component: 'useInvestmentStore', action: 'addDividend', etfId: etf.id });
+      const message = error instanceof Error ? error.message : 'Error al registrar dividendo';
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -128,19 +180,38 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
 
   reset: () => set(initialState),
 
+  getTotalDividends: () => {
+    const { transactions } = get();
+    return transactions
+      .filter((t) => t.type === 'dividend')
+      .reduce((sum, t) => sum + t.totalAmount, 0);
+  },
+
   getPortfolioSummary: () => {
     const { investments, transactions } = get();
     const { getPriceCop } = useMarketStore.getState();
 
-    const totalInvested = calculateTotalInvested(investments);
-
-    // Calcular valor actual usando precios del mercado
-    const currentValue = investments.reduce((total, inv) => {
-      // Obtener precio actual del mercado o usar el precio guardado en la inversión
+    // Actualizar cada inversión con precios de mercado
+    const updatedInvestments = investments.map((inv) => {
       const marketPrice = getPriceCop(inv.etfId);
       const priceToUse = marketPrice > 0 ? marketPrice : inv.currentPrice;
-      return total + (inv.totalUnits * priceToUse);
-    }, 0);
+      const updatedCurrentValue = inv.totalUnits * priceToUse;
+      const updatedReturnAbsolute = updatedCurrentValue - inv.totalInvested;
+      const updatedReturnPercentage = inv.totalInvested > 0
+        ? (updatedReturnAbsolute / inv.totalInvested) * 100
+        : 0;
+
+      return {
+        ...inv,
+        currentPrice: priceToUse,
+        currentValue: updatedCurrentValue,
+        returnAbsolute: updatedReturnAbsolute,
+        returnPercentage: updatedReturnPercentage,
+      };
+    });
+
+    const totalInvested = calculateTotalInvested(updatedInvestments);
+    const currentValue = updatedInvestments.reduce((total, inv) => total + inv.currentValue, 0);
 
     const { absolute: totalReturn, percentage: totalReturnPercentage } =
       calculateTotalReturn(currentValue, totalInvested);
@@ -159,6 +230,9 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
 
     const lastContribution = transactions.find((t) => t.type === 'buy');
 
+    // Contar transacciones de tipo 'buy' (aportes)
+    const buyTransactions = transactions.filter((t) => t.type === 'buy');
+
     return {
       totalInvested,
       currentValue,
@@ -166,9 +240,10 @@ export const useInvestmentStore = create<InvestmentState>((set, get) => ({
       totalReturnPercentage,
       monthlyContribution,
       lastContributionDate: lastContribution?.date || null,
-      investmentCount: investments.length,
-      diversificationScore: calculateDiversificationScore(investments),
-      investments,
+      investmentCount: updatedInvestments.length,
+      transactionCount: buyTransactions.length,
+      diversificationScore: calculateDiversificationScore(updatedInvestments),
+      investments: updatedInvestments,
       recentTransactions: transactions.slice(0, 5),
     };
   },

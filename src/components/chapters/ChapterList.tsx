@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Filter, Lock, Unlock, Plus } from 'lucide-react';
 import { Chapter, ChapterType, UnlockStatus } from '../../types/emotional.types';
 import { ChapterCard } from './ChapterCard';
-import { Button } from '../common';
+import { Button, LoadingSpinner } from '../common';
 import { CHAPTER_TYPE_CONFIGS } from '../../types/emotional.types';
 
 interface ChapterListProps {
@@ -64,12 +64,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
   const presentTypes = [...new Set(chapters.map((c) => c.type))];
 
   if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-500 dark:text-slate-400">Cargando capitulos...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Cargando capítulos..." className="py-12 min-h-0" />;
   }
 
   return (

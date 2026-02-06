@@ -13,7 +13,10 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
+import { validateAuthAndAccess } from './authGuard';
 import { Investment, Transaction, ETF } from '../../types';
+import { INVESTMENT_ERRORS } from '../../utils/errorMessages';
+import { withRetry, FIREBASE_RETRY_OPTIONS } from '../../utils/retry';
 
 // ============ HELPERS ============
 
@@ -37,6 +40,9 @@ export async function createInvestment(
   units: number,
   pricePerUnit: number
 ): Promise<Investment> {
+  // Validar autenticación antes de crear inversión
+  await validateAuthAndAccess(userId);
+
   const totalInvested = units * pricePerUnit;
 
   const investmentData = {
@@ -54,7 +60,10 @@ export async function createInvestment(
     updatedAt: serverTimestamp(),
   };
 
-  const docRef = await addDoc(getInvestmentsCollection(userId), investmentData);
+  const docRef = await withRetry(
+    () => addDoc(getInvestmentsCollection(userId), investmentData),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     id: docRef.id,
@@ -66,9 +75,15 @@ export async function createInvestment(
 }
 
 export async function getInvestments(userId: string): Promise<Investment[]> {
+  // Validar autenticación antes de leer inversiones
+  await validateAuthAndAccess(userId);
+
   // Consulta directa a la subcolección del usuario
   const investmentsRef = getInvestmentsCollection(userId);
-  const snapshot = await getDocs(investmentsRef);
+  const snapshot = await withRetry(
+    () => getDocs(investmentsRef),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   const investments = snapshot.docs.map((docSnap) => {
     const data = docSnap.data();
@@ -98,12 +113,18 @@ export async function getInvestmentByEtf(
   userId: string,
   etfId: string
 ): Promise<Investment | null> {
+  // Validar autenticación
+  await validateAuthAndAccess(userId);
+
   const q = query(
     getInvestmentsCollection(userId),
     where('etfId', '==', etfId)
   );
 
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (snapshot.empty) {
     return null;
@@ -135,11 +156,17 @@ export async function updateInvestment(
   investmentId: string,
   updates: Partial<Investment>
 ): Promise<void> {
+  // Validar autenticación antes de actualizar
+  await validateAuthAndAccess(userId);
+
   const docRef = getInvestmentDoc(userId, investmentId);
-  await updateDoc(docRef, {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 export async function addToInvestment(
@@ -148,11 +175,17 @@ export async function addToInvestment(
   additionalUnits: number,
   pricePerUnit: number
 ): Promise<void> {
+  // Validar autenticación antes de agregar a inversión
+  await validateAuthAndAccess(userId);
+
   const docRef = getInvestmentDoc(userId, investmentId);
-  const docSnap = await getDoc(docRef);
+  const docSnap = await withRetry(
+    () => getDoc(docRef),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   if (!docSnap.exists()) {
-    throw new Error('Inversión no encontrada');
+    throw new Error(INVESTMENT_ERRORS.NOT_FOUND);
   }
 
   const current = docSnap.data();
@@ -160,20 +193,29 @@ export async function addToInvestment(
   const newTotalInvested = current.totalInvested + additionalUnits * pricePerUnit;
   const newAveragePrice = newTotalInvested / newTotalUnits;
 
-  await updateDoc(docRef, {
-    totalUnits: newTotalUnits,
-    totalInvested: newTotalInvested,
-    averagePurchasePrice: newAveragePrice,
-    currentValue: newTotalUnits * current.currentPrice,
-    returnAbsolute: newTotalUnits * current.currentPrice - newTotalInvested,
-    returnPercentage:
-      ((newTotalUnits * current.currentPrice - newTotalInvested) / newTotalInvested) * 100,
-    updatedAt: serverTimestamp(),
-  });
+  await withRetry(
+    () => updateDoc(docRef, {
+      totalUnits: newTotalUnits,
+      totalInvested: newTotalInvested,
+      averagePurchasePrice: newAveragePrice,
+      currentValue: newTotalUnits * current.currentPrice,
+      returnAbsolute: newTotalUnits * current.currentPrice - newTotalInvested,
+      returnPercentage:
+        ((newTotalUnits * current.currentPrice - newTotalInvested) / newTotalInvested) * 100,
+      updatedAt: serverTimestamp(),
+    }),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 export async function deleteInvestment(userId: string, investmentId: string): Promise<void> {
-  await deleteDoc(getInvestmentDoc(userId, investmentId));
+  // Validar autenticación antes de eliminar
+  await validateAuthAndAccess(userId);
+
+  await withRetry(
+    () => deleteDoc(getInvestmentDoc(userId, investmentId)),
+    FIREBASE_RETRY_OPTIONS
+  );
 }
 
 // ============ TRANSACCIONES ============
@@ -183,13 +225,39 @@ export async function createTransaction(
 ): Promise<Transaction> {
   const { userId, ...transactionWithoutUserId } = transaction;
 
-  const transactionData = {
-    ...transactionWithoutUserId,
+  // Validar autenticación antes de crear transacción
+  await validateAuthAndAccess(userId);
+
+  // Construir objeto base sin campos opcionales undefined
+  const transactionData: Record<string, any> = {
+    investmentId: transactionWithoutUserId.investmentId,
+    etfId: transactionWithoutUserId.etfId,
+    etfTicker: transactionWithoutUserId.etfTicker,
+    etfName: transactionWithoutUserId.etfName,
+    type: transactionWithoutUserId.type,
+    units: transactionWithoutUserId.units,
+    pricePerUnit: transactionWithoutUserId.pricePerUnit,
+    totalAmount: transactionWithoutUserId.totalAmount,
+    commission: transactionWithoutUserId.commission,
     date: Timestamp.fromDate(transaction.date),
     createdAt: serverTimestamp(),
   };
 
-  const docRef = await addDoc(getTransactionsCollection(userId), transactionData);
+  // Solo agregar campos opcionales si tienen valor
+  if (transactionWithoutUserId.note) {
+    transactionData.note = transactionWithoutUserId.note;
+  }
+  if (transactionWithoutUserId.milestone) {
+    transactionData.milestone = transactionWithoutUserId.milestone;
+  }
+  if (transactionWithoutUserId.photo) {
+    transactionData.photo = transactionWithoutUserId.photo;
+  }
+
+  const docRef = await withRetry(
+    () => addDoc(getTransactionsCollection(userId), transactionData),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   return {
     ...transaction,
@@ -202,9 +270,15 @@ export async function getTransactions(
   userId: string,
   limitCount?: number
 ): Promise<Transaction[]> {
+  // Validar autenticación
+  await validateAuthAndAccess(userId);
+
   // Consulta directa a la subcolección del usuario
   const transactionsRef = getTransactionsCollection(userId);
-  const snapshot = await getDocs(transactionsRef);
+  const snapshot = await withRetry(
+    () => getDocs(transactionsRef),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   const transactions = snapshot.docs.map((docSnap) => {
     const data = docSnap.data();
@@ -238,12 +312,18 @@ export async function getTransactionsByInvestment(
   userId: string,
   investmentId: string
 ): Promise<Transaction[]> {
+  // Validar autenticación
+  await validateAuthAndAccess(userId);
+
   const q = query(
     getTransactionsCollection(userId),
     where('investmentId', '==', investmentId)
   );
 
-  const snapshot = await getDocs(q);
+  const snapshot = await withRetry(
+    () => getDocs(q),
+    FIREBASE_RETRY_OPTIONS
+  );
 
   const transactions = snapshot.docs.map((docSnap) => {
     const data = docSnap.data();

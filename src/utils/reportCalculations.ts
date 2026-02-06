@@ -256,11 +256,10 @@ export function calculateETFBreakdown(
       return date <= endOfYear;
     });
 
-    // Calcular unidades
+    // Calcular unidades (solo compras agregan unidades)
     const calculateUnits = (txs: Transaction[]) =>
       txs.reduce((sum, t) => {
         if (t.type === 'buy') return sum + t.units;
-        if (t.type === 'sell') return sum - t.units;
         return sum;
       }, 0);
 

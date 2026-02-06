@@ -11,6 +11,7 @@ import {
 } from './finnhub';
 import { AVAILABLE_ETFS } from '../../utils/constants';
 import { getInstrumentById } from '../../utils/instruments';
+import { MARKET_ERRORS } from '../../utils/errorMessages';
 
 export interface ETFPrice {
   etfId: string;
@@ -49,12 +50,10 @@ export async function getAllPrices(
     return { prices, exchangeRate, lastUpdated: new Date(), errors };
   }
 
-  // Intentar obtener tasa de cambio actualizada
-  if (apiKey) {
-    const newRate = await getUsdCopRate(apiKey);
-    if (newRate) {
-      exchangeRate = newRate;
-    }
+  // Intentar obtener tasa de cambio actualizada (no requiere API key)
+  const newRate = await getUsdCopRate();
+  if (newRate) {
+    exchangeRate = newRate;
   }
 
   // Separar instrumentos disponibles en API vs manuales
@@ -66,6 +65,7 @@ export async function getAllPrices(
     try {
       const quotes = await getMultipleQuotes(apiInstruments, apiKey);
       const failedIds: string[] = [];
+      const now = new Date(); // Usar fecha actual de la consulta, no la del mercado
 
       for (const instrumentId of apiInstruments) {
         const quote = quotes[instrumentId];
@@ -76,7 +76,7 @@ export async function getAllPrices(
             priceCop: convertUsdToCop(quote.price, exchangeRate),
             change: quote.change,
             changePercent: quote.changePercent,
-            lastUpdated: quote.timestamp,
+            lastUpdated: now, // Fecha de consulta, no del último trade
             source: 'api',
           };
         } else {
@@ -88,12 +88,12 @@ export async function getAllPrices(
 
       // Reportar si hubo fallos
       if (failedIds.length > 0 && failedIds.length < apiInstruments.length) {
-        errors.push(`No se pudo obtener precio para: ${failedIds.join(', ')}`);
+        errors.push(`${MARKET_ERRORS.SYMBOL_NOT_FOUND}: ${failedIds.join(', ')}`);
       } else if (failedIds.length === apiInstruments.length) {
-        errors.push('No se pudieron obtener precios de la API. Usando valores guardados.');
+        errors.push(MARKET_ERRORS.API_ERROR);
       }
     } catch (error) {
-      errors.push('Error de conexión con Finnhub API');
+      errors.push(MARKET_ERRORS.CONNECTION_FAILED);
       // Usar precios de fallback para todos
       for (const instrumentId of apiInstruments) {
         prices[instrumentId] = createFallbackPrice(instrumentId, exchangeRate);

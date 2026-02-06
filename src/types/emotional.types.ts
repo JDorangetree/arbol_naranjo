@@ -113,6 +113,13 @@ export interface YearlyNarrative {
   yearPhotos?: string[];
   photoCaptions?: string[];
 
+  // Carta especial escrita por el usuario (reemplaza introducción automática)
+  specialLetter?: string;
+
+  // Contenido educativo generado por IA (cache)
+  aiEducationalContent?: string;
+  aiEducationalGeneratedAt?: Date;
+
   // Versionado
   versions: YearlyNarrativeVersion[];
   currentVersion: number;

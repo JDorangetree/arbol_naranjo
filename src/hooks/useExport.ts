@@ -16,6 +16,7 @@ import { useAuthStore } from '../store';
 import { exportToJSON, downloadJSON } from '../services/export/jsonExporter';
 import { downloadHTML } from '../services/export/htmlExporter';
 import { exportToZIP, isZipSupported } from '../services/export/zipExporter';
+import { EXPORT_ERRORS, getFriendlyErrorMessage } from '../utils/errorMessages';
 
 interface UseExportReturn {
   // Estado
@@ -108,7 +109,7 @@ export function useExport(): UseExportReturn {
       return result;
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage = getFriendlyErrorMessage(err);
       setError(errorMessage);
 
       const errorResult: ExportResult = {
@@ -176,7 +177,7 @@ export function useExport(): UseExportReturn {
       return htmlResult;
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage = getFriendlyErrorMessage(err);
       setError(errorMessage);
 
       const errorResult: ExportResult = {
@@ -220,10 +221,10 @@ export function useExport(): UseExportReturn {
         filename: '',
         size: 0,
         itemCount: { transactions: 0, snapshots: 0, chapters: 0, narratives: 0, mediaFiles: 0 },
-        errors: ['La exportación ZIP no está soportada en este navegador'],
+        errors: [EXPORT_ERRORS.ZIP_NOT_SUPPORTED],
       };
       setLastResult(errorResult);
-      setError('La exportación ZIP no está soportada');
+      setError(EXPORT_ERRORS.ZIP_NOT_SUPPORTED);
       return errorResult;
     }
 
@@ -252,7 +253,7 @@ export function useExport(): UseExportReturn {
       return result;
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage = getFriendlyErrorMessage(err);
       setError(errorMessage);
 
       const errorResult: ExportResult = {
